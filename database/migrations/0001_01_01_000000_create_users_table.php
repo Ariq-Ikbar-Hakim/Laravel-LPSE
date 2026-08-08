@@ -13,10 +13,15 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('nip')->unique();
+            $table->string('nama');
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('opd');
+            $table->string('sub_unit_opd');
+            $table->enum('jabatan_aktif', ['admin', 'PPK', 'PP']);
+            $table->string('sk_nomor');
+            $table->integer('status_aktif')->default(0); // 0 = pending, 1 = aktif
             $table->rememberToken();
             $table->timestamps();
         });
