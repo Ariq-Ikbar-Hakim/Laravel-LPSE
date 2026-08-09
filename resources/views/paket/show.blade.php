@@ -127,6 +127,103 @@
                 </div>
             </div>
 
+            <!-- Berita Acara (BA) & Tanda Tangan Digital Section -->
+            @php
+                $ba = $paket->beritaAcara->first();
+            @endphp
+            @if($ba)
+                <div class="p-6 bg-white dark:bg-gray-800 shadow rounded-lg border-t-4 border-indigo-600 space-y-4">
+                    <div class="flex justify-between items-center border-b dark:border-gray-700 pb-2">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Berita Acara & Pengesahan Digital</h3>
+                            <span class="text-xs text-gray-500 font-mono">No. BA: {{ $ba->nomor_ba }}</span>
+                        </div>
+                        <div>
+                            @php
+                                $baStatusClasses = [
+                                    'draft' => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+                                    'tanda_tangan_pertama' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+                                    'selesai' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
+                                ];
+                                $baClass = $baStatusClasses[$ba->status] ?? 'bg-gray-100 text-gray-800';
+                            @endphp
+                            <span class="px-2.5 py-1 text-xs font-semibold rounded-full {{ $baClass }}">
+                                BA: {{ strtoupper(str_replace('_', ' ', $ba->status)) }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Signatures Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <!-- PP Signature -->
+                        <div class="p-4 rounded border dark:border-gray-700 space-y-2 {{ $ba->hasSignatureFrom('PP') ? 'bg-emerald-50/5 dark:bg-emerald-950/5 border-emerald-500/20' : 'bg-gray-50 dark:bg-gray-750' }}">
+                            <div class="flex justify-between font-bold text-gray-700 dark:text-gray-300">
+                                <span>Pejabat Pengadaan (PP)</span>
+                                <span>{{ $ba->hasSignatureFrom('PP') ? '✅ Signed' : '❌ Unsigned' }}</span>
+                            </div>
+                            @if($ba->hasSignatureFrom('PP'))
+                                <div class="text-gray-900 dark:text-gray-200 font-semibold">{{ $ba->ppSignature()->user->nama }}</div>
+                                <div class="text-gray-500 dark:text-gray-400">NIP: {{ $ba->ppSignature()->user->nip }}</div>
+                                <div class="text-[10px] text-gray-400">IP: {{ $ba->ppSignature()->ip_address }} | {{ $ba->ppSignature()->signed_at->format('d/m/Y H:i') }}</div>
+                            @else
+                                <div class="text-gray-450 italic">Menunggu tanda tangan Pejabat Pengadaan.</div>
+                                <!-- PP Sign Button -->
+                                @can('signAsPp', $ba)
+                                    <form action="{{ route('berita-acara.sign', $ba) }}" method="POST" class="mt-2">
+                                        @csrf
+                                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-750 text-white font-bold py-1.5 px-3 rounded transition duration-150 uppercase tracking-widest text-[10px]">
+                                            Tanda Tangani Secara Digital
+                                        </button>
+                                    </form>
+                                @endcan
+                            @endif
+                        </div>
+
+                        <!-- PPK Signature -->
+                        <div class="p-4 rounded border dark:border-gray-700 space-y-2 {{ $ba->hasSignatureFrom('PPK') ? 'bg-emerald-50/5 dark:bg-emerald-950/5 border-emerald-500/20' : 'bg-gray-50 dark:bg-gray-750' }}">
+                            <div class="flex justify-between font-bold text-gray-700 dark:text-gray-300">
+                                <span>Pejabat Pembuat Komitmen (PPK)</span>
+                                <span>{{ $ba->hasSignatureFrom('PPK') ? '✅ Signed' : '❌ Unsigned' }}</span>
+                            </div>
+                            @if($ba->hasSignatureFrom('PPK'))
+                                <div class="text-gray-900 dark:text-gray-200 font-semibold">{{ $ba->ppkSignature()->user->nama }}</div>
+                                <div class="text-gray-500 dark:text-gray-400">NIP: {{ $ba->ppkSignature()->user->nip }}</div>
+                                <div class="text-[10px] text-gray-400">IP: {{ $ba->ppkSignature()->ip_address }} | {{ $ba->ppkSignature()->signed_at->format('d/m/Y H:i') }}</div>
+                            @else
+                                <div class="text-gray-450 italic">Menunggu tanda tangan Pejabat Pembuat Komitmen.</div>
+                                <!-- PPK Sign Button -->
+                                @can('signAsPpk', $ba)
+                                    <form action="{{ route('berita-acara.sign', $ba) }}" method="POST" class="mt-2">
+                                        @csrf
+                                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-750 text-white font-bold py-1.5 px-3 rounded transition duration-150 uppercase tracking-widest text-[10px]">
+                                            Tanda Tangani Secara Digital
+                                        </button>
+                                    </form>
+                                @else
+                                    @if(Auth::user()->jabatan_aktif === 'PPK' && $ba->status === 'draft')
+                                        <p class="text-[10px] text-rose-500 mt-2 font-medium">Tanda tangan terkunci: Menunggu tanda tangan Pejabat Pengadaan (PP) terlebih dahulu.</p>
+                                    @elseif(Auth::user()->jabatan_aktif === 'PPK' && $paket->ppk_id === null && $ba->status === 'tanda_tangan_pertama' && !$paket->lampiran()->where('status_validasi', 'disetujui')->exists())
+                                        <p class="text-[10px] text-rose-500 mt-2 font-medium">Tanda tangan terkunci: Belum ada minimal satu berkas lampiran dengan status 'disetujui' untuk paket manual ini.</p>
+                                    @endif
+                                @endcan
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- PDF & Verification Links for Completed BA -->
+                    @if($ba->status === 'selesai')
+                        <div class="flex flex-col sm:flex-row gap-3 pt-2 text-xs">
+                            <a href="{{ Storage::url($ba->file_laporan) }}" download class="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded transition duration-150 uppercase tracking-widest text-[10px]">
+                                📥 Unduh Berita Acara (PDF)
+                            </a>
+                            <a href="{{ route('verify', $ba->verification_hash) }}" target="_blank" class="inline-flex items-center justify-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded hover:bg-gray-250 dark:hover:bg-gray-650 transition duration-150 uppercase tracking-widest text-[10px]">
+                                🔍 Halaman Verifikasi Publik
+                            </a>
+                        </div>
+                    @endif
+                </div>
+            @endif
+
             <!-- Documents (Lampiran) Section -->
             <div class="p-6 bg-white dark:bg-gray-800 shadow rounded-lg">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 border-b dark:border-gray-700 pb-2">Dokumen Lampiran Pengadaan</h3>

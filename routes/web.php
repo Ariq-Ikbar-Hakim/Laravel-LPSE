@@ -12,8 +12,13 @@ use App\Http\Controllers\PaketController;
 use App\Http\Controllers\PaketReviewController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\VerificationController;
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
+
+// Rute verifikasi publik (Bebas autentikasi / public)
+Route::get('/verify/{hash}', [VerificationController::class, 'verify'])->name('verify');
+Route::post('/verify/{hash}/file', [VerificationController::class, 'verifyFile'])->name('verify.file');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -42,6 +47,7 @@ Route::middleware('auth')->group(function () {
     // Detail paket dan komentar dinamis (Wildcards di bagian bawah)
     Route::get('paket/{paket}', [PaketController::class, 'show'])->name('paket.show');
     Route::post('paket/{paket}/comment', [CommentController::class, 'store'])->name('paket.comment');
+    Route::post('berita-acara/{beritaAcara}/sign', [PaketReviewController::class, 'signBa'])->name('berita-acara.sign');
 });
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {

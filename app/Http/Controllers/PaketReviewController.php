@@ -108,4 +108,99 @@ class PaketReviewController extends Controller
 
         return redirect()->route('paket.show', $paket)->with('success', 'Paket Manual (Bypass PP) berhasil dibuat dengan status Disetujui.');
     }
+
+    /**
+     * Sign the Berita Acara (PP or PPK).
+     */
+    public function signBa(Request $request, \App\Models\BeritaAcara $beritaAcara)
+    {
+        $user = Auth::user();
+
+        if ($user->jabatan_aktif === 'PP') {
+            Gate::authorize('signAsPp', $beritaAcara);
+
+            \App\Models\Signature::create([
+                'berita_acara_id' => $beritaAcara->id,
+                'user_id' => $user->id,
+                'role_saat_ttd' => 'PP',
+                'urutan' => 1,
+                'ip_address' => $request->ip(),
+                'signed_at' => now(),
+            ]);
+
+            $beritaAcara->update([
+                'status' => 'tanda_tangan_pertama',
+            ]);
+
+            return redirect()->back()->with('success', 'Berita Acara berhasil ditandatangani oleh Pejabat Pengadaan.');
+        }
+
+        if ($user->jabatan_aktif === 'PPK') {
+            Gate::authorize('signAsPpk', $beritaAcara);
+
+            // Simpan tanda tangan PPK
+            $signaturePpk = \App\Models\Signature::create([
+                'berita_acara_id' => $beritaAcara->id,
+                'user_id' => $user->id,
+                'role_saat_ttd' => 'PPK',
+                'urutan' => 2,
+                'ip_address' => $request->ip(),
+                'signed_at' => now(),
+            ]);
+
+            // Update status BA dan status paket
+            $beritaAcara->update([
+                'status' => 'selesai',
+            ]);
+
+            $beritaAcara->paket->update([
+                'status' => 'selesai',
+            ]);
+
+            // 1. Generate QR Code
+            $qrCodePath = "qrcodes/qr_{$beritaAcara->verification_hash}.svg";
+            $verificationUrl = route('verify', $beritaAcara->verification_hash);
+            
+            // Buat folder qrcodes jika belum ada
+            if (!\Illuminate\Support\Facades\Storage::disk('public')->exists('qrcodes')) {
+                \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory('qrcodes');
+            }
+            
+            $qrCodeContent = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->generate($verificationUrl);
+            \Illuminate\Support\Facades\Storage::disk('public')->put($qrCodePath, $qrCodeContent);
+
+            // Update path QR Code pada signature
+            $signaturePpk->update(['qr_code_path' => $qrCodePath]);
+            $beritaAcara->ppSignature()->update(['qr_code_path' => $qrCodePath]);
+
+            // 2. Generate PDF Final
+            $pdfPath = "berita-acara/ba_{$beritaAcara->id}.pdf";
+            
+            if (!\Illuminate\Support\Facades\Storage::disk('public')->exists('berita-acara')) {
+                \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory('berita-acara');
+            }
+
+            // Memuat file PDF dengan layout
+            $paket = $beritaAcara->paket;
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.berita_acara', [
+                'beritaAcara' => $beritaAcara,
+                'paket' => $paket,
+                'qrCodePath' => storage_path("app/public/{$qrCodePath}"),
+            ]);
+
+            \Illuminate\Support\Facades\Storage::disk('public')->put($pdfPath, $pdf->output());
+
+            // 3. Hitung SHA-256 dan simpan di signatures
+            $fileContent = \Illuminate\Support\Facades\Storage::disk('public')->get($pdfPath);
+            $fileHash = hash('sha256', $fileContent);
+
+            // Simpan hash ke database
+            $beritaAcara->update(['file_laporan' => $pdfPath]);
+            $beritaAcara->signatures()->update(['hash_dokumen' => $fileHash]);
+
+            return redirect()->back()->with('success', 'Berita Acara berhasil disahkan (selesai ditandatangani kedua belah pihak) dan PDF final siap diunduh.');
+        }
+
+        abort(403, 'Peran jabatan Anda tidak valid untuk menandatangani dokumen ini.');
+    }
 }

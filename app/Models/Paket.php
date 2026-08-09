@@ -55,4 +55,9 @@ class Paket extends Model
     {
         return $this->hasMany(LogPaket::class, 'paket_id');
     }
+
+    public function beritaAcara(): HasMany
+    {
+        return $this->hasMany(BeritaAcara::class, 'paket_id');
+    }
 }

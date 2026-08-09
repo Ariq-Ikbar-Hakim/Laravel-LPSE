@@ -36,6 +36,41 @@ class PaketObserver
                 'aksi' => strtoupper($newStatus),
                 'keterangan' => "Status paket diubah dari '{$oldStatus}' menjadi '{$newStatus}'.",
             ]);
+
+            // Jika status berubah ke disetujui, buat Berita Acara baru jika belum ada
+            if ($newStatus === 'disetujui') {
+                $existingBa = \App\Models\BeritaAcara::where('paket_id', $paket->id)->first();
+                if (!$existingBa) {
+                    $tahun = date('Y');
+                    $nomorBa = "BA/{$paket->id}/LPSE/{$tahun}";
+                    
+                    \App\Models\BeritaAcara::create([
+                        'paket_id' => $paket->id,
+                        'nomor_ba' => $nomorBa,
+                        'verification_hash' => \Illuminate\Support\Str::random(40),
+                        'status' => 'draft',
+                    ]);
+                }
+            }
+
+            // Jika status dirubah ke perlu_revisi, hapus seluruh signatures BA dan kembalikan status BA ke draft
+            if ($newStatus === 'perlu_revisi') {
+                $ba = \App\Models\BeritaAcara::where('paket_id', $paket->id)->first();
+                if ($ba) {
+                    // Hapus data signatures
+                    $ba->signatures()->delete();
+                    
+                    // Hapus file fisik PDF lama
+                    if ($ba->file_laporan && \Illuminate\Support\Facades\Storage::disk('public')->exists($ba->file_laporan)) {
+                        \Illuminate\Support\Facades\Storage::disk('public')->delete($ba->file_laporan);
+                    }
+                    
+                    $ba->update([
+                        'status' => 'draft',
+                        'file_laporan' => null,
+                    ]);
+                }
+            }
         }
     }
 }

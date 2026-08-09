@@ -20,5 +20,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         \App\Models\Paket::observe(\App\Observers\PaketObserver::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\BeritaAcara::class, \App\Policies\BeritaAcaraPolicy::class);
     }
 }
