@@ -115,6 +115,33 @@
                             </form>
                         @endif
 
+                        <!-- Transfer Tugas / Mutasi Paket -->
+                        @php
+                            $isOwner = false;
+                            $user = Auth::user();
+                            if ($user->jabatan_aktif === 'PPK' && $paket->ppk_id === $user->id) {
+                                $isOwner = true;
+                            } elseif ($user->jabatan_aktif === 'PP' && $paket->pp_id === $user->id) {
+                                $isOwner = true;
+                            }
+                        @endphp
+                        @if($isOwner && !in_array($paket->status, ['disetujui', 'selesai']))
+                            @php
+                                $pendingTransfer = \App\Models\AssignmentTransfer::where('paket_id', $paket->id)
+                                    ->where('status', 'menunggu')
+                                    ->first();
+                            @endphp
+                            @if($pendingTransfer)
+                                <div class="p-3 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 rounded border border-amber-200 text-xs">
+                                    <strong>Mutasi Pending:</strong> Pengajuan transfer tugas ke <span class="font-semibold">{{ $pendingTransfer->keUser->nama }}</span> sedang menunggu persetujuan Admin.
+                                </div>
+                            @else
+                                <a href="{{ route('paket.transfer', $paket) }}" class="block text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded text-xs transition duration-150 uppercase tracking-widest">
+                                    Ajukan Transfer Tugas
+                                </a>
+                            @endif
+                        @endif
+
                         <!-- Back Button -->
                         @if(Auth::user()->jabatan_aktif === 'PPK')
                             <a href="{{ route('paket.index') }}" class="block text-center text-xs text-gray-500 hover:underline">Kembali ke Daftar Paket &rarr;</a>
@@ -374,6 +401,74 @@
                     </div>
                 </form>
             </div>
+
+            <!-- Riwayat Mutasi / Transfer Tugas Paket -->
+            @php
+                $transfers = \App\Models\AssignmentTransfer::where('paket_id', $paket->id)
+                    ->with(['dariUser', 'keUser', 'disetujuiOleh'])
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            @endphp
+            @if($transfers->isNotEmpty())
+                <div class="p-6 bg-white dark:bg-gray-800 shadow rounded-lg space-y-4">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white border-b dark:border-gray-700 pb-2">Riwayat Mutasi & Transfer Tugas</h3>
+                    <div class="overflow-x-auto text-xs">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-750">
+                                <tr>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tanggal</th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Dari</th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ke</th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Alasan Pengaju</th>
+                                    <th class="px-4 py-2 text-center font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Catatan Admin / Detail</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                @foreach($transfers as $t)
+                                    <tr class="hover:bg-gray-55 dark:hover:bg-gray-750">
+                                        <td class="px-4 py-3 whitespace-nowrap text-gray-500 dark:text-gray-400">
+                                            {{ $t->created_at->format('d M Y, H:i') }} WIB
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap">
+                                            <div class="font-medium text-gray-900 dark:text-gray-200">{{ $t->dariUser->nama }}</div>
+                                            <div class="text-[10px] text-gray-400">NIP: {{ $t->dariUser->nip }}</div>
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap">
+                                            <div class="font-medium text-gray-900 dark:text-gray-200">{{ $t->keUser->nama }}</div>
+                                            <div class="text-[10px] text-gray-400">NIP: {{ $t->keUser->nip }}</div>
+                                        </td>
+                                        <td class="px-4 py-3 max-w-[200px] truncate text-gray-700 dark:text-gray-300" title="{{ $t->alasan }}">
+                                            {{ $t->alasan }}
+                                        </td>
+                                        <td class="px-4 py-3 text-center whitespace-nowrap">
+                                            @php
+                                                $sClasses = [
+                                                    'menunggu' => 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+                                                    'disetujui' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
+                                                    'ditolak' => 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',
+                                                ];
+                                            @endphp
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold {{ $sClasses[$t->status] ?? 'bg-gray-100 text-gray-800' }}">
+                                                {{ strtoupper($t->status) }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 text-gray-600 dark:text-gray-400">
+                                            @if($t->status === 'ditolak')
+                                                <span class="text-rose-500 italic">Ditolak: {{ $t->catatan_admin }}</span>
+                                            @elseif($t->status === 'disetujui')
+                                                <span class="text-emerald-500 font-medium">Disetujui oleh {{ $t->disetujuiOleh->nama ?? 'Admin' }}</span>
+                                            @else
+                                                <span class="text-amber-500 italic">Menunggu keputusan Admin</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
 
             <!-- Log Aktivitas (Riwayat Paket) -->
             <div class="p-6 bg-white dark:bg-gray-800 shadow rounded-lg space-y-4">

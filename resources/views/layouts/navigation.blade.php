@@ -19,6 +19,9 @@
                         <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.index')">
                             {{ __('Manajemen User') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('admin.transfers.index')" :active="request()->routeIs('admin.transfers.index')">
+                            {{ __('Mutasi Paket') }}
+                        </x-nav-link>
                     @endif
                 </div>
             </div>
@@ -78,6 +81,9 @@
             @if(Auth::user()->jabatan_aktif === 'admin')
                 <x-responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.index')">
                     {{ __('Manajemen User') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.transfers.index')" :active="request()->routeIs('admin.transfers.index')">
+                    {{ __('Mutasi Paket') }}
                 </x-responsive-nav-link>
             @endif
         </div>

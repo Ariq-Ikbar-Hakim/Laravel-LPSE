@@ -62,15 +62,6 @@ class AdminUserController extends Controller
 
             if ($oldRole !== $newRole) {
                 $user->update(['jabatan_aktif' => $newRole]);
-
-                // Catat riwayat perubahan ke tabel user_role_history
-                DB::table('user_role_history')->insert([
-                    'user_id' => $user->id,
-                    'jabatan_lama' => $oldRole,
-                    'jabatan_baru' => $newRole,
-                    'diubah_oleh' => auth()->id(),
-                    'created_at' => now(),
-                ]);
             }
         });
 

@@ -13,6 +13,7 @@ use App\Http\Controllers\PaketReviewController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\VerificationController;
+use App\Http\Controllers\AssignmentTransferController;
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
 
@@ -48,6 +49,8 @@ Route::middleware('auth')->group(function () {
     Route::get('paket/{paket}', [PaketController::class, 'show'])->name('paket.show');
     Route::post('paket/{paket}/comment', [CommentController::class, 'store'])->name('paket.comment');
     Route::post('berita-acara/{beritaAcara}/sign', [PaketReviewController::class, 'signBa'])->name('berita-acara.sign');
+    Route::get('paket/{paket}/transfer', [AssignmentTransferController::class, 'create'])->name('paket.transfer');
+    Route::post('paket/{paket}/transfer', [AssignmentTransferController::class, 'store'])->name('paket.transfer.store');
 });
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -56,6 +59,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('/users/{user}/reject', [AdminUserController::class, 'reject'])->name('users.reject');
     Route::patch('/users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.update-role');
     Route::post('/users/{user}/reset-token', [AdminUserController::class, 'generateResetToken'])->name('users.reset-token');
+    
+    // Rute Transfer / Mutasi Tugas
+    Route::get('/transfers', [AssignmentTransferController::class, 'indexAdmin'])->name('transfers.index');
+    Route::post('/transfers/{transfer}/approve', [AssignmentTransferController::class, 'approveAdmin'])->name('transfers.approve');
+    Route::post('/transfers/{transfer}/reject', [AssignmentTransferController::class, 'rejectAdmin'])->name('transfers.reject');
 });
 
 require __DIR__.'/auth.php';
