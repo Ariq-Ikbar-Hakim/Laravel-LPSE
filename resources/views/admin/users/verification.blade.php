@@ -5,8 +5,8 @@
             <!-- Header Title -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Manajemen Pengguna & Verifikasi Akun</h1>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Kelola antrian persetujuan registrasi pengguna baru dan wewenang jabatan pengguna aktif.</p>
+                    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Verifikasi Akun Baru</h1>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Approve atau reject pengajuan registrasi dari pejabat PPK dan PP baru.</p>
                 </div>
             </div>
 
@@ -24,14 +24,19 @@
                 </div>
             @endif
 
-            <!-- Section 1: Pending Requests -->
+            <!-- Table Card -->
             <div class="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm space-y-4">
                 <h3 class="text-lg font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">
-                    {{ __('Permintaan Registrasi Baru (Pending)') }}
+                    {{ __('Antrian Persetujuan Registrasi') }}
                 </h3>
 
                 @if($pendingUsers->isEmpty())
-                    <p class="text-sm text-slate-400 dark:text-slate-500 py-4 italic">Tidak ada permintaan registrasi yang tertunda saat ini.</p>
+                    <div class="py-12 text-center">
+                        <div class="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                            <i class="fa-solid fa-user-check text-2xl"></i>
+                        </div>
+                        <p class="text-sm text-slate-400 dark:text-slate-500 italic">Tidak ada permintaan registrasi yang tertunda saat ini.</p>
+                    </div>
                 @else
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm">
@@ -76,69 +81,6 @@
                                                 @method('DELETE')
                                                 <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-1.5 px-3.5 rounded-xl text-xs transition duration-150">
                                                     Reject
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
-            </div>
-
-            <!-- Section 2: Active Accounts -->
-            <div class="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm space-y-4">
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">
-                    {{ __('Daftar Pengguna Aktif') }}
-                </h3>
-
-                @if($activeUsers->isEmpty())
-                    <p class="text-sm text-slate-400 dark:text-slate-500 py-4 italic">Tidak ada pengguna aktif lain.</p>
-                @else
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-sm">
-                            <thead>
-                                <tr class="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 font-semibold text-xs uppercase bg-slate-50/50 dark:bg-slate-800/50">
-                                    <th class="p-4 pl-6">NIP</th>
-                                    <th class="p-4">Nama</th>
-                                    <th class="p-4">Email</th>
-                                    <th class="p-4">OPD</th>
-                                    <th class="p-4">Jabatan Aktif</th>
-                                    <th class="p-4 pr-6 text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-655 dark:text-slate-300 font-medium">
-                                @foreach($activeUsers as $user)
-                                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition">
-                                        <td class="p-4 pl-6 font-mono text-xs">{{ $user->nip }}</td>
-                                        <td class="p-4 font-semibold text-slate-900 dark:text-white">{{ $user->nama }}</td>
-                                        <td class="p-4 text-xs">{{ $user->email }}</td>
-                                        <td class="p-4">
-                                            <div>{{ $user->opd }}</div>
-                                            <div class="text-xs text-slate-400 dark:text-slate-500 font-normal">{{ $user->sub_unit_opd }}</div>
-                                        </td>
-                                        <td class="p-4">
-                                            <!-- Update Role Form -->
-                                            <form action="{{ route('admin.users.update-role', $user) }}" method="POST" class="flex items-center space-x-2">
-                                                @csrf
-                                                @method('PATCH')
-                                                <select name="jabatan_aktif" class="text-xs border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 rounded-xl shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-1.5">
-                                                    <option value="admin" {{ $user->jabatan_aktif == 'admin' ? 'selected' : '' }}>Admin</option>
-                                                    <option value="PPK" {{ $user->jabatan_aktif == 'PPK' ? 'selected' : '' }}>PPK</option>
-                                                    <option value="PP" {{ $user->jabatan_aktif == 'PP' ? 'selected' : '' }}>PP</option>
-                                                </select>
-                                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-xl text-xs transition duration-150">
-                                                    Update
-                                                </button>
-                                            </form>
-                                        </td>
-                                        <td class="p-4 pr-6 text-center">
-                                            <!-- Generate Reset Password Token -->
-                                            <form action="{{ route('admin.users.reset-token', $user) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin mengirim token reset password ke email user?')">
-                                                @csrf
-                                                <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-1.5 px-3.5 rounded-xl text-xs transition duration-150">
-                                                    Reset Password
                                                 </button>
                                             </form>
                                         </td>

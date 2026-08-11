@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Paket;
+use App\Models\BeritaAcara;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -100,5 +102,84 @@ class AdminUserController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Token berhasil dibuat, namun gagal mengirim email: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Tampilkan daftar paket untuk Admin.
+     */
+    public function paketIndex(Request $request): View
+    {
+        $query = Paket::with(['ppk', 'pp']);
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama_paket', 'like', '%' . $search . '%')
+                  ->orWhere('kode_rup', 'like', '%' . $search . '%');
+            });
+        }
+        $paket = $query->latest()->paginate(15);
+        return view('admin.paket.index', compact('paket'));
+    }
+
+    /**
+     * Tampilkan daftar berita acara untuk Admin.
+     */
+    public function beritaAcaraIndex(Request $request): View
+    {
+        $query = BeritaAcara::with(['paket.ppk', 'paket.pp']);
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nomor_ba', 'like', '%' . $search . '%')
+                  ->orWhereHas('paket', function($pq) use ($search) {
+                      $pq->where('nama_paket', 'like', '%' . $search . '%');
+                  });
+            });
+        }
+        $beritaAcara = $query->latest()->paginate(15);
+        return view('admin.berita-acara.index', compact('beritaAcara'));
+    }
+
+    /**
+     * Tampilkan halaman verifikasi akun baru (pending).
+     */
+    public function verificationIndex(): View
+    {
+        $pendingUsers = User::where('status_aktif', 0)->latest()->get();
+        return view('admin.users.verification', compact('pendingUsers'));
+    }
+
+    /**
+     * Tampilkan halaman reset password pengguna.
+     */
+    public function resetPasswordIndex(Request $request): View
+    {
+        $query = User::where('status_aktif', 1)->where('id', '!=', auth()->id());
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama', 'like', '%' . $search . '%')
+                  ->orWhere('nip', 'like', '%' . $search . '%');
+            });
+        }
+        $users = $query->latest()->paginate(15);
+        return view('admin.users.reset-password', compact('users'));
+    }
+
+    /**
+     * Tampilkan halaman transfer jabatan (edit role).
+     */
+    public function transferJabatanIndex(Request $request): View
+    {
+        $query = User::where('status_aktif', 1)->where('id', '!=', auth()->id());
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama', 'like', '%' . $search . '%')
+                  ->orWhere('nip', 'like', '%' . $search . '%');
+            });
+        }
+        $users = $query->latest()->paginate(15);
+        return view('admin.users.transfer-jabatan', compact('users'));
     }
 }

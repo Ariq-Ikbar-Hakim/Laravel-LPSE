@@ -60,6 +60,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::patch('/users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.update-role');
     Route::post('/users/{user}/reset-token', [AdminUserController::class, 'generateResetToken'])->name('users.reset-token');
     
+    // Submenu Administrator
+    Route::get('/users/verification', [AdminUserController::class, 'verificationIndex'])->name('users.verification');
+    Route::get('/users/reset-password', [AdminUserController::class, 'resetPasswordIndex'])->name('users.reset-password');
+    Route::get('/users/transfer-jabatan', [AdminUserController::class, 'transferJabatanIndex'])->name('users.transfer-jabatan');
+    
+    // Submenu Pengadaan
+    Route::get('/paket', [AdminUserController::class, 'paketIndex'])->name('paket.index');
+    Route::get('/berita-acara', [AdminUserController::class, 'beritaAcaraIndex'])->name('berita-acara.index');
+
     // Rute Transfer / Mutasi Tugas
     Route::get('/transfers', [AssignmentTransferController::class, 'indexAdmin'])->name('transfers.index');
     Route::post('/transfers/{transfer}/approve', [AssignmentTransferController::class, 'approveAdmin'])->name('transfers.approve');

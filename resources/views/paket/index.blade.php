@@ -1,82 +1,97 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Daftar Usulan Paket Pengadaan') }}
-        </h2>
-    </x-slot>
+    <div class="py-8 px-4 md:px-8 font-jakarta bg-slate-100 dark:bg-slate-950 min-h-screen">
+        <div class="max-w-7xl mx-auto space-y-6">
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <!-- Header Title & Action Button -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Daftar Usulan Paket Pengadaan</h1>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Kelola seluruh paket usulan pengadaan barang/jasa Anda di sini.</p>
+                </div>
+                <a href="{{ route('paket.create') }}" class="px-5 py-2.5 rounded-2xl text-xs font-bold bg-slate-900 dark:bg-slate-800 text-white hover:bg-indigo-650 transition shadow-md shadow-slate-900/10 flex items-center gap-1.5 self-start sm:self-auto">
+                    <i class="fa-solid fa-plus text-xs"></i> Buat Paket Baru
+                </a>
+            </div>
 
             <!-- Success Alert -->
             @if(session('success'))
-                <div class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400" role="alert">
-                    <span class="font-medium">Berhasil!</span> {{ session('success') }}
+                <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 flex items-center gap-3 text-emerald-800 dark:text-emerald-350 text-sm" role="alert">
+                    <i class="fa-solid fa-circle-check text-base text-emerald-500"></i>
+                    <span><strong class="font-bold">Berhasil!</strong> {{ session('success') }}</span>
                 </div>
             @endif
 
-            <!-- Top Actions -->
-            <div class="flex justify-between items-center">
-                <!-- Status Tab Filter -->
-                <div class="flex space-x-2 border-b dark:border-gray-700 pb-px">
-                    @foreach(['all' => 'Semua', 'draft' => 'Draft', 'dikirim' => 'Dikirim', 'perlu_revisi' => 'Perlu Revisi', 'disetujui' => 'Disetujui', 'selesai' => 'Selesai'] as $key => $label)
-                        <a href="{{ route('paket.index', ['status' => $key]) }}" class="px-4 py-2 text-sm font-medium transition-colors duration-150 {{ $status === $key ? 'border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }}">
+            <!-- Status Tabs Filter Card -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-sm overflow-x-auto whitespace-nowrap scrollbar-none">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-400 dark:text-slate-500 mr-2 uppercase tracking-wider"><i class="fa-solid fa-filter mr-1"></i>Status:</span>
+                    @foreach(['all' => 'Semua', 'draft' => 'Draft', 'dikirim' => 'Dikirim', 'kaji_ulang' => 'Kaji Ulang', 'perlu_revisi' => 'Revisi', 'disetujui' => 'Disetujui', 'selesai' => 'Selesai'] as $key => $label)
+                        @php
+                            $active = $status === $key;
+                        @endphp
+                        <a href="{{ route('paket.index', ['status' => $key]) }}" 
+                           class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 {{ $active ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-850 hover:text-slate-700 dark:hover:text-slate-200' }}">
                             {{ $label }}
                         </a>
                     @endforeach
                 </div>
-
-                <a href="{{ route('paket.create') }}" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-750 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
-                    + Buat Paket Baru
-                </a>
             </div>
 
-            <!-- Paket Table -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <!-- Paket Table Card -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden">
                 @if($paket->isEmpty())
-                    <p class="text-sm text-gray-500 dark:text-gray-400 p-8 text-center">Tidak ada paket pengadaan ditemukan dengan status ini.</p>
+                    <div class="p-12 text-center text-slate-400 dark:text-slate-500 italic text-sm space-y-2">
+                        <div class="w-12 h-12 bg-slate-50 dark:bg-slate-850 rounded-full flex items-center justify-center mx-auto text-slate-350 dark:text-slate-650">
+                            <i class="fa-regular fa-folder-open text-xl"></i>
+                        </div>
+                        <p>Tidak ada paket pengadaan ditemukan dengan status ini.</p>
+                    </div>
                 @else
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                            <thead class="bg-gray-50 dark:bg-gray-750">
-                                <tr>
-                                    <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kode RUP</th>
-                                    <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nama Paket</th>
-                                    <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pagu Anggaran</th>
-                                    <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 font-semibold text-xs uppercase bg-slate-50/50 dark:bg-slate-850/50">
+                                    <th class="p-4 pl-6">Kode RUP</th>
+                                    <th class="p-4">Nama Paket</th>
+                                    <th class="p-4">Pagu Anggaran</th>
+                                    <th class="p-4 text-center">Status</th>
+                                    <th class="p-4 pr-6 text-center">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-650 dark:text-slate-350 font-medium">
                                 @foreach($paket as $item)
-                                    <tr class="hover:bg-gray-55 dark:hover:bg-gray-700">
-                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100 font-mono text-xs">{{ $item->kode_rup }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100 font-semibold">{{ $item->nama_paket }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-gray-550 dark:text-gray-300">Rp {{ number_format($item->pagu, 2, ',', '.') }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
+                                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-850/40 transition">
+                                        <td class="p-4 pl-6 font-mono text-slate-400 dark:text-slate-500 text-xs">{{ $item->kode_rup }}</td>
+                                        <td class="p-4 font-semibold text-slate-900 dark:text-white">{{ $item->nama_paket }}</td>
+                                        <td class="p-4 text-slate-650 dark:text-slate-300 font-semibold text-xs">Rp {{ number_format($item->pagu, 0, ',', '.') }}</td>
+                                        <td class="p-4 text-center">
                                             @php
                                                 $statusClasses = [
-                                                    'draft' => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-350',
-                                                    'dikirim' => 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
-                                                    'kaji_ulang' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-                                                    'perlu_revisi' => 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200',
-                                                    'disetujui' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
-                                                    'batal' => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-                                                    'selesai' => 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
+                                                    'draft' => 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
+                                                    'dikirim' => 'bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400',
+                                                    'kaji_ulang' => 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400',
+                                                    'perlu_revisi' => 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-450',
+                                                    'disetujui' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400',
+                                                    'batal' => 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
+                                                    'selesai' => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400',
                                                 ];
-                                                $class = $statusClasses[$item->status] ?? 'bg-gray-100 text-gray-800';
+                                                $class = $statusClasses[$item->status] ?? 'bg-slate-100 text-slate-600';
                                             @endphp
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $class }}">
-                                                {{ str_replace('_', ' ', ucfirst($item->status)) }}
+                                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold {{ $class }}">
+                                                {{ strtoupper($item->status) }}
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-center space-x-2">
-                                            <a href="{{ route('paket.show', $item) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">Detail</a>
+                                        <td class="p-4 pr-6 text-center space-x-2">
+                                            <a href="{{ route('paket.show', $item) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-605 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/45 hover:text-indigo-650 dark:hover:text-indigo-400 transition">
+                                                Detail
+                                            </a>
                                             @if($item->status === 'draft')
                                                 <form action="{{ route('paket.destroy', $item) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus draft paket ini?')">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="text-rose-600 dark:text-rose-400 hover:underline">Hapus</button>
+                                                    <button type="submit" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/50 transition border-none cursor-pointer">
+                                                        Hapus
+                                                    </button>
                                                 </form>
                                             @endif
                                         </td>
@@ -85,7 +100,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="p-6 bg-gray-50 dark:bg-gray-750 border-t dark:border-gray-700">
+                    <div class="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/20">
                         {{ $paket->links() }}
                     </div>
                 @endif
