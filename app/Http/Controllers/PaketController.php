@@ -34,7 +34,8 @@ class PaketController extends Controller
      */
     public function create()
     {
-        return view('paket.create');
+        $ppUsers = User::where('jabatan_aktif', 'PP')->where('status_aktif', 1)->get();
+        return view('paket.create', compact('ppUsers'));
     }
 
     /**
@@ -46,6 +47,12 @@ class PaketController extends Controller
             'kode_rup' => ['required', 'string', 'max:50'],
             'nama_paket' => ['required', 'string', 'max:255'],
             'pagu' => ['required', 'numeric', 'min:0'],
+            'tahun_anggaran' => ['required', 'string', 'max:4'],
+            'metode_pengadaan' => ['nullable', 'string', 'max:255'],
+            'sumber_dana' => ['nullable', 'string', 'max:255'],
+            'jenis_pengadaan' => ['nullable', 'string', 'max:255'],
+            'pp_id' => ['required', 'exists:users,id'],
+            'keterangan_tambahan' => ['nullable', 'string'],
         ]);
 
         $paket = Paket::create([
@@ -54,6 +61,12 @@ class PaketController extends Controller
             'nama_paket' => $request->nama_paket,
             'pagu' => $request->pagu,
             'status' => 'draft',
+            'metode' => $request->metode_pengadaan,
+            'sumber_dana' => $request->sumber_dana,
+            'jenis' => $request->jenis_pengadaan,
+            'pp_id' => $request->pp_id,
+            'tahun_anggaran' => $request->tahun_anggaran,
+            'keterangan_tambahan' => $request->keterangan_tambahan,
         ]);
 
         return redirect()->route('paket.show', $paket)->with('success', 'Draft paket berhasil dibuat. Silakan unggah dokumen persyaratan.');
