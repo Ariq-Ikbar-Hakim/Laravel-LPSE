@@ -99,15 +99,54 @@ class PaketController extends Controller
         Gate::authorize('update', $paket);
 
         $request->validate([
-            'file_dokumen' => ['required', 'file', 'max:10240'], // maks 10MB
+            'file_dokumen' => [
+                'required',
+                'file',
+                'max:3072', // maks 3MB
+                'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,odt,ods,odp,txt,csv,rtf',
+            ],
             'tipe_dokumen' => ['required', 'string', 'max:100'],
+        ], [
+            'file_dokumen.mimes' => 'Format file tidak diizinkan. Hanya dokumen yang diperbolehkan (PDF, Word, Excel, PowerPoint, dll).',
+            'file_dokumen.max'   => 'Ukuran file melebihi batas maksimal 3 MB.',
         ]);
 
         $file = $request->file('file_dokumen');
         $extension = $file->getClientOriginalExtension();
         $timestamp = time();
 
-        // Hitung versi revisi
+        // Cek apakah ada revisi untuk tipe dokumen ini
+        $adaRevisi = Lampiran::where('paket_id', $paket->id)
+            ->where('tipe_dokumen', $request->tipe_dokumen)
+            ->where('status_validasi', 'revisi')
+            ->exists();
+
+        if ($adaRevisi) {
+            // Hitung berapa kali sudah upload ulang setelah ada revisi (status pending sesudah ada revisi)
+            // Revision counter: berapa lampiran pending yang ada setelah lampiran revisi terakhir
+            $lampiranRevisiTerakhir = Lampiran::where('paket_id', $paket->id)
+                ->where('tipe_dokumen', $request->tipe_dokumen)
+                ->where('status_validasi', 'revisi')
+                ->latest('id')
+                ->first();
+
+            $revisiCount = Lampiran::where('paket_id', $paket->id)
+                ->where('tipe_dokumen', $request->tipe_dokumen)
+                ->where('status_validasi', 'revisi')
+                ->count();
+
+            $versionLabel = 'r' . $revisiCount;
+        } else {
+            // Belum ada revisi sama sekali, hitung sebagai versi biasa
+            $versionCount = Lampiran::where('paket_id', $paket->id)
+                ->where('tipe_dokumen', $request->tipe_dokumen)
+                ->count() + 1;
+            $versionLabel = 'v' . $versionCount;
+        }
+
+        $originalNameWithoutExt = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $newOriginalName = "{$originalNameWithoutExt}{$versionLabel}.{$extension}";
+
         $version = Lampiran::where('paket_id', $paket->id)
             ->where('tipe_dokumen', $request->tipe_dokumen)
             ->count() + 1;
@@ -118,7 +157,7 @@ class PaketController extends Controller
         Lampiran::create([
             'paket_id' => $paket->id,
             'file_path' => $filePath,
-            'nama_file' => $file->getClientOriginalName(),
+            'nama_file' => $newOriginalName,
             'tipe_dokumen' => $request->tipe_dokumen,
             'uploaded_by' => Auth::id(),
             'status_validasi' => 'pending',
@@ -137,6 +176,18 @@ class PaketController extends Controller
         // Cek minimal 1 lampiran
         if ($paket->lampiran()->count() === 0) {
             return redirect()->back()->with('error', 'Paket kosong tidak dapat dikirim. Silakan unggah minimal satu dokumen persyaratan.');
+        }
+
+        // Cek apakah ada dokumen yang direvisi yang belum diunggah ulang
+        $dokumenRevisi = $paket->lampiran()->where('status_validasi', 'revisi')->pluck('tipe_dokumen')->unique();
+        foreach ($dokumenRevisi as $tipe) {
+            $sudahDiunggah = $paket->lampiran()
+                ->where('tipe_dokumen', $tipe)
+                ->where('status_validasi', 'pending')
+                ->exists();
+            if (!$sudahDiunggah) {
+                return redirect()->back()->with('error', "Anda wajib mengunggah dokumen revisi untuk {$tipe} sebelum mengirim paket ini.");
+            }
         }
 
         // Cari PP secara acak untuk ditugaskan jika belum ada

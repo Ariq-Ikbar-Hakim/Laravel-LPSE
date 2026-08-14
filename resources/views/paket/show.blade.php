@@ -182,7 +182,7 @@
                                 </div>
 
                                 <!-- Aksi Pejabat Pengadaan -->
-                                @if(Auth::user()->jabatan_aktif === 'PP' && $paket->pp_id === Auth::id() && in_array($paket->status, ['dikirim', 'kaji_ulang', 'perlu_revisi']))
+                                @if(Auth::user()->jabatan_aktif === 'PP' && $paket->pp_id === Auth::id() && in_array($paket->status, ['dikirim', 'kaji_ulang']))
                                 <div x-data="{ showRevisiOptions: false }" class="bg-slate-50 dark:bg-slate-900 border border-blue-100 dark:border-slate-700 rounded-2xl shadow-sm">
                                     <div class="p-4 bg-blue-50/50 dark:bg-slate-800 border-b border-blue-100 dark:border-slate-700 rounded-t-2xl">
                                         <h3 class="font-bold text-sm text-blue-800 dark:text-blue-400">Aksi Pejabat Pengadaan</h3>
@@ -209,7 +209,7 @@
                                             </div>
 
                                             <div class="space-y-2">
-                                                <button type="button" @click="$refs.status.value='disetujui'; $el.closest('form').submit()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition shadow-sm">
+                                                <button type="button" x-show="!showRevisiOptions" @click="$refs.status.value='disetujui'; $el.closest('form').submit()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition shadow-sm">
                                                     Setujui Dokumen (Lanjut)
                                                 </button>
                                                 
@@ -221,7 +221,11 @@
                                                     Kirim Permintaan Revisi
                                                 </button>
 
-                                                <button type="button" @click="$refs.status.value='batal'; $el.closest('form').submit()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 font-bold py-2.5 px-4 rounded-xl text-sm transition">
+                                                <button type="button" x-show="showRevisiOptions" style="display: none;" @click="showRevisiOptions = false" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 font-bold py-2.5 px-4 rounded-xl text-sm transition">
+                                                    Kembali
+                                                </button>
+
+                                                <button type="button" x-show="!showRevisiOptions" @click="$refs.status.value='batal'; $el.closest('form').submit()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 font-bold py-2.5 px-4 rounded-xl text-sm transition">
                                                     BATALKAN PAKET
                                                 </button>
                                             </div>
@@ -259,8 +263,20 @@
                                             <th class="p-4 font-bold text-center">Aksi</th>
                                         </tr>
                                     </thead>
+                                    @php
+                                        $typeCounters = [];
+                                    @endphp
                                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                                         @forelse($paket->lampiran as $lampiran)
+                                            @php
+                                                if (!isset($typeCounters[$lampiran->tipe_dokumen])) {
+                                                    $typeCounters[$lampiran->tipe_dokumen] = 0;
+                                                }
+                                                $typeCounters[$lampiran->tipe_dokumen]++;
+                                                $count = $typeCounters[$lampiran->tipe_dokumen];
+                                                $versionLabel = $count === 1 ? 'v1' : 'r' . ($count - 1);
+                                                $labelClass = $count === 1 ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700';
+                                            @endphp
                                             <tr class="hover:bg-slate-50 dark:hover:bg-slate-850/50 transition">
                                                 <td class="p-4 text-sm font-medium text-slate-800 dark:text-slate-200">
                                                     {{ $lampiran->tipe_dokumen }}
@@ -271,7 +287,7 @@
                                                         <div>
                                                             <a href="{{ Storage::url($lampiran->file_path) }}" class="text-blue-600 dark:text-blue-400 font-medium text-sm hover:underline">{{ $lampiran->nama_file }}</a>
                                                             <div class="flex items-center gap-2 mt-1">
-                                                                <span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-bold">v1</span>
+                                                                <span class="{{ $labelClass }} px-1.5 py-0.5 rounded text-[10px] font-bold">{{ strtoupper($versionLabel) }}</span>
                                                                 <span class="text-[11px] text-slate-500">&bull; Oleh: {{ $lampiran->uploader->nama ?? 'Sistem' }}</span>
                                                             </div>
                                                         </div>
@@ -309,8 +325,8 @@
                             </div>
                         </div>
 
-                        <!-- Upload Modal (Hidden by default) -->
-                        <div id="upload-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
+                        <!-- Upload Modal (Hidden by default or shown if error) -->
+                        <div id="upload-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 {{ $errors->has('file_dokumen') || $errors->has('tipe_dokumen') ? '' : 'hidden' }}">
                             <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 flex justify-between items-center">
                                     <h3 class="font-bold">Upload Lampiran Baru</h3>
@@ -327,10 +343,31 @@
                                             <option value="Rancangan Kontrak">Rancangan Kontrak</option>
                                             <option value="Lainnya">Lainnya</option>
                                         </select>
+                                        @error('tipe_dokumen')
+                                            <p class="mt-1 text-[10px] text-rose-600 font-bold"><i class="fa-solid fa-circle-exclamation mr-1"></i> {{ $message }}</p>
+                                        @enderror
                                     </div>
-                                    <div>
+                                    <div x-data="{ 
+                                        fileError: '',
+                                        checkFileSize(event) {
+                                            const file = event.target.files[0];
+                                            if (file && file.size > 3 * 1024 * 1024) {
+                                                this.fileError = 'Ukuran file melebihi batas maksimal 3 MB. Silakan pilih file yang lebih kecil.';
+                                                event.target.value = '';
+                                            } else {
+                                                this.fileError = '';
+                                            }
+                                        }
+                                    }">
                                         <label class="block text-xs font-bold text-slate-700 mb-1">Pilih File</label>
-                                        <input type="file" name="file_dokumen" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
+                                        <input type="file" name="file_dokumen" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.txt,.csv,.rtf" @change="checkFileSize($event)" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
+                                        <p x-show="!fileError" class="mt-1 text-[10px] text-slate-500"><i class="fa-solid fa-circle-info mr-1"></i> Hanya dokumen (PDF, Word, Excel, PPT, dll). Maks. 3 MB.</p>
+                                        <p x-show="fileError" style="display: none;" class="mt-1 text-[10px] text-rose-600 font-bold">
+                                            <i class="fa-solid fa-circle-exclamation mr-1"></i> <span x-text="fileError"></span>
+                                        </p>
+                                        @error('file_dokumen')
+                                            <p class="mt-1 text-[10px] text-rose-600 font-bold"><i class="fa-solid fa-circle-exclamation mr-1"></i> {{ str_replace('10240', '3072', $message) }}</p>
+                                        @enderror
                                     </div>
                                     <div class="pt-2 flex justify-end">
                                         <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-xl text-sm hover:bg-blue-700">Upload</button>
