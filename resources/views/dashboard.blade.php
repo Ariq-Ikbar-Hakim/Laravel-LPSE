@@ -280,7 +280,13 @@
                         @foreach($data['recent_transfers_list'] as $transfer)
                             <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
                                 <td class="p-4 pl-6 text-slate-400 dark:text-slate-500 text-xs whitespace-nowrap">{{ $transfer->created_at->format('d M Y, H:i') }}</td>
-                                <td class="p-4 font-semibold text-slate-900 dark:text-white text-xs">{{ $transfer->paket->nama_paket ?? '-' }}</td>
+                                <td class="p-4 font-semibold text-slate-900 dark:text-white text-xs">
+                                    @if($transfer->paket)
+                                        {{ $transfer->paket->nama_paket }}
+                                    @else
+                                        <span class="text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wide">SWAP JABATAN & PERAN</span>
+                                    @endif
+                                </td>
                                 <td class="p-4 text-xs">{{ $transfer->dariUser->nama ?? '-' }}</td>
                                 <td class="p-4 text-xs">{{ $transfer->keUser->nama ?? '-' }}</td>
                                 <td class="p-4 text-center">

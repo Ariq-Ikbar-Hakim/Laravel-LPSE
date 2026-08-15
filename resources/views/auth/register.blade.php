@@ -49,22 +49,9 @@
                 <x-input-error :messages="$errors->get('opd')" class="mt-1" />
             </div>
 
-            <!-- Sub Unit OPD -->
+            <!-- Jabatan -->
             <div>
-                <label for="sub_unit_opd" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Sub Unit OPD</label>
-                <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                        <i class="fa-solid fa-network-wired text-sm"></i>
-                    </span>
-                    <input id="sub_unit_opd" type="text" name="sub_unit_opd" value="{{ old('sub_unit_opd') }}" placeholder="Bidang / Seksi / Bagian" required
-                        class="w-full pl-11 pr-4 py-3 bg-slate-50/80 border border-slate-200 hover:border-slate-300 focus:border-indigo-600 focus:bg-white rounded-2xl text-sm text-slate-800 focus:outline-none focus:ring-4 focus:ring-indigo-50 transition-all duration-200">
-                </div>
-                <x-input-error :messages="$errors->get('sub_unit_opd')" class="mt-1" />
-            </div>
-
-            <!-- Jabatan Diajukan -->
-            <div>
-                <label for="jabatan_aktif" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Jabatan Diajukan</label>
+                <label for="jabatan_aktif" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Jabatan</label>
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 pointer-events-none group-focus-within:text-indigo-600 transition-colors">
                         <i class="fa-solid fa-user-tie text-sm"></i>
@@ -82,17 +69,17 @@
                 <x-input-error :messages="$errors->get('jabatan_aktif')" class="mt-1" />
             </div>
 
-            <!-- Nomor SK -->
+            <!-- Nomor telepon -->
             <div>
-                <label for="sk_nomor" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Nomor SK Jabatan</label>
+                <label for="no_telp" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Nomor Telepon</label>
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                        <i class="fa-solid fa-file-contract text-sm"></i>
+                        <i class="fa-solid fa-phone text-sm"></i>
                     </span>
-                    <input id="sk_nomor" type="text" name="sk_nomor" value="{{ old('sk_nomor') }}" placeholder="Nomor SK Pengangkatan" required
+                    <input id="no_telp" type="text" name="no_telp" value="{{ old('no_telp') }}" placeholder="Contoh: 0812..." required
                         class="w-full pl-11 pr-4 py-3 bg-slate-50/80 border border-slate-200 hover:border-slate-300 focus:border-indigo-600 focus:bg-white rounded-2xl text-sm text-slate-800 focus:outline-none focus:ring-4 focus:ring-indigo-50 transition-all duration-200">
                 </div>
-                <x-input-error :messages="$errors->get('sk_nomor')" class="mt-1" />
+                <x-input-error :messages="$errors->get('no_telp')" class="mt-1" />
             </div>
 
             <!-- Email Address -->

@@ -40,13 +40,13 @@
                                     <th class="p-4 pl-6">NIP</th>
                                     <th class="p-4">Nama</th>
                                     <th class="p-4">Email</th>
-                                    <th class="p-4">OPD / Sub-Unit</th>
-                                    <th class="p-4">Nomor SK</th>
-                                    <th class="p-4">Jabatan Diajukan</th>
+                                    <th class="p-4">OPD / Unit Kerja</th>
+                                    <th class="p-4">Nomor Telepon</th>
+                                    <th class="p-4">Jabatan</th>
                                     <th class="p-4 pr-6 text-center">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-650 dark:text-slate-300 font-medium">
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-655 dark:text-slate-300 font-medium">
                                 @foreach($pendingUsers as $user)
                                     <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition">
                                         <td class="p-4 pl-6 font-mono text-xs">{{ $user->nip }}</td>
@@ -54,9 +54,8 @@
                                         <td class="p-4 text-xs">{{ $user->email }}</td>
                                         <td class="p-4">
                                             <div>{{ $user->opd }}</div>
-                                            <div class="text-xs text-slate-400 dark:text-slate-500 font-normal">{{ $user->sub_unit_opd }}</div>
                                         </td>
-                                        <td class="p-4 text-xs font-mono">{{ $user->sk_nomor }}</td>
+                                        <td class="p-4 text-xs font-mono">{{ $user->no_telp }}</td>
                                         <td class="p-4">
                                             <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400">
                                                 {{ $user->jabatan_aktif }}
@@ -104,6 +103,7 @@
                                     <th class="p-4">Nama</th>
                                     <th class="p-4">Email</th>
                                     <th class="p-4">OPD</th>
+                                    <th class="p-4">Nomor Telepon</th>
                                     <th class="p-4">Jabatan Aktif</th>
                                     <th class="p-4 pr-6 text-center">Aksi</th>
                                 </tr>
@@ -114,10 +114,8 @@
                                         <td class="p-4 pl-6 font-mono text-xs">{{ $user->nip }}</td>
                                         <td class="p-4 font-semibold text-slate-900 dark:text-white">{{ $user->nama }}</td>
                                         <td class="p-4 text-xs">{{ $user->email }}</td>
-                                        <td class="p-4">
-                                            <div>{{ $user->opd }}</div>
-                                            <div class="text-xs text-slate-400 dark:text-slate-500 font-normal">{{ $user->sub_unit_opd }}</div>
-                                        </td>
+                                        <td class="p-4 text-xs">{{ $user->opd }}</td>
+                                        <td class="p-4 text-xs font-mono">{{ $user->no_telp }}</td>
                                         <td class="p-4">
                                             <!-- Update Role Form -->
                                             <form action="{{ route('admin.users.update-role', $user) }}" method="POST" class="flex items-center space-x-2">

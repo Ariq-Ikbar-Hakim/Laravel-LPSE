@@ -35,7 +35,13 @@ class AdminUserController extends Controller
     {
         $user->update(['status_aktif' => 1]);
 
-        return redirect()->back()->with('success', 'Akun ' . $user->nama . ' berhasil disetujui.');
+        try {
+            Mail::to($user->email)->send(new \App\Mail\AccountApprovedNotification($user->nama));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('success', 'Akun ' . $user->nama . ' berhasil disetujui, namun gagal mengirim email notifikasi: ' . $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Akun ' . $user->nama . ' berhasil disetujui dan email notifikasi telah dikirim.');
     }
 
     /**
@@ -44,9 +50,17 @@ class AdminUserController extends Controller
     public function reject(User $user): RedirectResponse
     {
         $nama = $user->nama;
+        $email = $user->email;
+
+        try {
+            Mail::to($email)->send(new \App\Mail\AccountRejectedNotification($nama));
+        } catch (\Exception $e) {
+            // Tetap jalankan penghapusan jika email gagal terkirim
+        }
+
         $user->delete(); // Hard delete dari database
 
-        return redirect()->back()->with('success', 'Pendaftaran akun ' . $nama . ' telah ditolak dan data dihapus secara permanen.');
+        return redirect()->back()->with('success', 'Pendaftaran akun ' . $nama . ' telah ditolak dan email notifikasi telah dikirim.');
     }
 
     /**
@@ -98,6 +112,11 @@ class AdminUserController extends Controller
         try {
             Mail::to($user->email)->send(new \App\Mail\ResetPasswordNotification($user->nama, $resetUrl));
 
+            // Hapus status permintaan reset
+            $user->update([
+                'reset_requested_at' => null,
+            ]);
+
             return redirect()->back()->with('success', 'Token reset password berhasil dibuat dan dikirim ke email ' . $user->email);
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Token berhasil dibuat, namun gagal mengirim email: ' . $e->getMessage());
@@ -137,7 +156,7 @@ class AdminUserController extends Controller
             });
         }
         $beritaAcara = $query->latest()->paginate(15);
-        return view('admin.berita-acara.index', compact('beritaAcara'));
+        return view('berita-acara.index', compact('beritaAcara'));
     }
 
     /**
@@ -154,23 +173,11 @@ class AdminUserController extends Controller
      */
     public function resetPasswordIndex(Request $request): View
     {
-        $query = User::where('status_aktif', 1)->where('id', '!=', auth()->id());
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('nama', 'like', '%' . $search . '%')
-                  ->orWhere('nip', 'like', '%' . $search . '%');
-            });
-        }
-        $users = $query->latest()->paginate(15);
-        return view('admin.users.reset-password', compact('users'));
-    }
+        $pendingResets = User::where('status_aktif', 1)
+            ->whereNotNull('reset_requested_at')
+            ->orderBy('reset_requested_at', 'asc')
+            ->get();
 
-    /**
-     * Tampilkan halaman transfer jabatan (edit role).
-     */
-    public function transferJabatanIndex(Request $request): View
-    {
         $query = User::where('status_aktif', 1)->where('id', '!=', auth()->id());
         if ($request->filled('search')) {
             $search = $request->search;
@@ -180,6 +187,6 @@ class AdminUserController extends Controller
             });
         }
         $users = $query->latest()->paginate(15);
-        return view('admin.users.transfer-jabatan', compact('users'));
+        return view('admin.users.reset-password', compact('users', 'pendingResets'));
     }
 }

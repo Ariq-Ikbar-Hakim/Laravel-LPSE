@@ -25,6 +25,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/request-reset', [ProfileController::class, 'requestReset'])->name('profile.request-reset');
+    Route::post('/request-reset', [ProfileController::class, 'storeRequestReset'])->name('profile.store-request-reset');
 
     // PPK Specific Routes (Static first)
     Route::middleware('role:PPK')->group(function () {
@@ -49,8 +51,9 @@ Route::middleware('auth')->group(function () {
     Route::get('paket/{paket}', [PaketController::class, 'show'])->name('paket.show');
     Route::post('paket/{paket}/comment', [CommentController::class, 'store'])->name('paket.comment');
     Route::post('berita-acara/{beritaAcara}/sign', [PaketReviewController::class, 'signBa'])->name('berita-acara.sign');
-    Route::get('paket/{paket}/transfer', [AssignmentTransferController::class, 'create'])->name('paket.transfer');
-    Route::post('paket/{paket}/transfer', [AssignmentTransferController::class, 'store'])->name('paket.transfer.store');
+    Route::get('transfers/create', [AssignmentTransferController::class, 'create'])->name('transfers.create');
+    Route::post('transfers', [AssignmentTransferController::class, 'store'])->name('transfers.store');
+    Route::get('berita-acara', [PaketController::class, 'beritaAcaraIndex'])->name('berita-acara.index');
 });
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -63,11 +66,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Submenu Administrator
     Route::get('/users/verification', [AdminUserController::class, 'verificationIndex'])->name('users.verification');
     Route::get('/users/reset-password', [AdminUserController::class, 'resetPasswordIndex'])->name('users.reset-password');
-    Route::get('/users/transfer-jabatan', [AdminUserController::class, 'transferJabatanIndex'])->name('users.transfer-jabatan');
-    
+
     // Submenu Pengadaan
     Route::get('/paket', [AdminUserController::class, 'paketIndex'])->name('paket.index');
-    Route::get('/berita-acara', [AdminUserController::class, 'beritaAcaraIndex'])->name('berita-acara.index');
 
     // Rute Transfer / Mutasi Tugas
     Route::get('/transfers', [AssignmentTransferController::class, 'indexAdmin'])->name('transfers.index');

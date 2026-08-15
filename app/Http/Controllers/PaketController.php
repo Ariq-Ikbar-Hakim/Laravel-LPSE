@@ -158,4 +158,37 @@ class PaketController extends Controller
 
         return redirect()->route('paket.index')->with('success', 'Paket draft berhasil dihapus.');
     }
+
+    /**
+     * Tampilkan daftar Berita Acara yang terikat dengan PP, PPK, atau Admin.
+     */
+    public function beritaAcaraIndex(Request $request)
+    {
+        $user = Auth::user();
+        $query = \App\Models\BeritaAcara::with('paket.ppk');
+
+        if ($user->jabatan_aktif === 'PPK') {
+            $query->whereHas('paket', function ($q) use ($user) {
+                $q->where('ppk_id', $user->id);
+            });
+        } elseif ($user->jabatan_aktif === 'PP') {
+            $query->whereHas('paket', function ($q) use ($user) {
+                $q->where('pp_id', $user->id);
+            });
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor_ba', 'like', '%' . $search . '%')
+                  ->orWhereHas('paket', function ($pq) use ($search) {
+                      $pq->where('nama_paket', 'like', '%' . $search . '%');
+                  });
+            });
+        }
+
+        $beritaAcara = $query->latest()->paginate(15);
+
+        return view('berita-acara.index', compact('beritaAcara'));
+    }
 }

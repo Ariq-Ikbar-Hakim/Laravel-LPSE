@@ -45,9 +45,9 @@
                                     <th class="p-4 pl-6">NIP</th>
                                     <th class="p-4">Nama</th>
                                     <th class="p-4">Email</th>
-                                    <th class="p-4">OPD / Sub-Unit</th>
-                                    <th class="p-4">Nomor SK</th>
-                                    <th class="p-4">Jabatan Diajukan</th>
+                                    <th class="p-4">OPD / Unit Kerja</th>
+                                    <th class="p-4">Nomor Telepon</th>
+                                    <th class="p-4">Jabatan</th>
                                     <th class="p-4 pr-6 text-center">Aksi</th>
                                 </tr>
                             </thead>
@@ -59,9 +59,8 @@
                                         <td class="p-4 text-xs">{{ $user->email }}</td>
                                         <td class="p-4">
                                             <div>{{ $user->opd }}</div>
-                                            <div class="text-xs text-slate-400 dark:text-slate-500 font-normal">{{ $user->sub_unit_opd }}</div>
                                         </td>
-                                        <td class="p-4 text-xs font-mono">{{ $user->sk_nomor }}</td>
+                                        <td class="p-4 text-xs font-mono">{{ $user->no_telp }}</td>
                                         <td class="p-4">
                                             <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400">
                                                 {{ $user->jabatan_aktif }}

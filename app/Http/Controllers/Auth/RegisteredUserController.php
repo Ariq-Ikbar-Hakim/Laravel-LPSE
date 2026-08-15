@@ -36,9 +36,8 @@ class RegisteredUserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'opd' => ['required', 'string', 'max:255'],
-            'sub_unit_opd' => ['required', 'string', 'max:255'],
+            'no_telp' => ['required', 'string', 'max:20'],
             'jabatan_aktif' => ['required', 'string', 'in:PPK,PP'],
-            'sk_nomor' => ['required', 'string', 'max:255'],
         ]);
 
         $user = User::create([
@@ -47,9 +46,8 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'opd' => $request->opd,
-            'sub_unit_opd' => $request->sub_unit_opd,
+            'no_telp' => $request->no_telp,
             'jabatan_aktif' => $request->jabatan_aktif,
-            'sk_nomor' => $request->sk_nomor,
             'status_aktif' => 0, // Pending verifikasi admin
         ]);
 

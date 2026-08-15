@@ -32,7 +32,7 @@
                         <div>
                             @php
                                 $statusClasses = [
-                                    'draft' => 'bg-gray-100 text-gray-800 dark:bg-gray-750 dark:text-gray-300',
+                                    'draft' => 'bg-gray-100 text-gray-800 dark:bg-slate-900 dark:text-gray-300',
                                     'dikirim' => 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
                                     'kaji_ulang' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
                                     'perlu_revisi' => 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200',
@@ -69,7 +69,7 @@
 
                     <!-- Read Receipt Indicator -->
                     @if($paket->dilihat_admin_at)
-                        <div class="p-3 bg-indigo-50 dark:bg-gray-750 text-indigo-850 dark:text-indigo-200 rounded border border-indigo-200 text-xs flex items-center space-x-2">
+                        <div class="p-3 bg-indigo-50 dark:bg-slate-900 text-indigo-850 dark:text-indigo-200 rounded border border-indigo-200 text-xs flex items-center space-x-2">
                             <span class="text-base">🟢</span>
                             <span><strong>Sudah Dilihat Admin:</strong> Paket ini telah dibuka & dipantau oleh Admin LPSE pada {{ $paket->dilihat_admin_at->format('d M Y, H:i') }} WIB.</span>
                         </div>
@@ -115,7 +115,7 @@
                             </form>
                         @endif
 
-                        <!-- Transfer Tugas / Mutasi Paket -->
+                        <!-- Swap Jabatan / Mutasi Peran -->
                         @php
                             $isOwner = false;
                             $user = Auth::user();
@@ -125,19 +125,19 @@
                                 $isOwner = true;
                             }
                         @endphp
-                        @if($isOwner && !in_array($paket->status, ['disetujui', 'selesai']))
+                        @if($isOwner)
                             @php
-                                $pendingTransfer = \App\Models\AssignmentTransfer::where('paket_id', $paket->id)
+                                $pendingSwap = \App\Models\AssignmentTransfer::where('dari_user_id', $user->id)
                                     ->where('status', 'menunggu')
                                     ->first();
                             @endphp
-                            @if($pendingTransfer)
+                            @if($pendingSwap)
                                 <div class="p-3 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 rounded border border-amber-200 text-xs">
-                                    <strong>Mutasi Pending:</strong> Pengajuan transfer tugas ke <span class="font-semibold">{{ $pendingTransfer->keUser->nama }}</span> sedang menunggu persetujuan Admin.
+                                    <strong>Mutasi Pending:</strong> Pengajuan swap jabatan dengan <span class="font-semibold text-slate-900 dark:text-white">{{ $pendingSwap->keUser->nama }}</span> sedang menunggu persetujuan Admin.
                                 </div>
                             @else
-                                <a href="{{ route('paket.transfer', $paket) }}" class="block text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded text-xs transition duration-150 uppercase tracking-widest">
-                                    Ajukan Transfer Tugas
+                                <a href="{{ route('transfers.create') }}" class="block text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition duration-150 uppercase tracking-widest cursor-pointer shadow-sm">
+                                    Ajukan Swap Jabatan
                                 </a>
                             @endif
                         @endif
@@ -183,7 +183,7 @@
                     <!-- Signatures Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                         <!-- PP Signature -->
-                        <div class="p-4 rounded border dark:border-gray-700 space-y-2 {{ $ba->hasSignatureFrom('PP') ? 'bg-emerald-50/5 dark:bg-emerald-950/5 border-emerald-500/20' : 'bg-gray-50 dark:bg-gray-750' }}">
+                        <div class="p-4 rounded border dark:border-gray-700 space-y-2 {{ $ba->hasSignatureFrom('PP') ? 'bg-emerald-50/5 dark:bg-emerald-950/5 border-emerald-500/20' : 'bg-gray-50 dark:bg-slate-900' }}">
                             <div class="flex justify-between font-bold text-gray-700 dark:text-gray-300">
                                 <span>Pejabat Pengadaan (PP)</span>
                                 <span>{{ $ba->hasSignatureFrom('PP') ? '✅ Signed' : '❌ Unsigned' }}</span>
@@ -193,7 +193,7 @@
                                 <div class="text-gray-500 dark:text-gray-400">NIP: {{ $ba->ppSignature()->user->nip }}</div>
                                 <div class="text-[10px] text-gray-400">IP: {{ $ba->ppSignature()->ip_address }} | {{ $ba->ppSignature()->signed_at->format('d/m/Y H:i') }}</div>
                             @else
-                                <div class="text-gray-450 italic">Menunggu tanda tangan Pejabat Pengadaan.</div>
+                                <div class="text-gray-455 italic">Menunggu tanda tangan Pejabat Pengadaan.</div>
                                 <!-- PP Sign Button -->
                                 @can('signAsPp', $ba)
                                     <form action="{{ route('berita-acara.sign', $ba) }}" method="POST" class="mt-2">
@@ -207,7 +207,7 @@
                         </div>
 
                         <!-- PPK Signature -->
-                        <div class="p-4 rounded border dark:border-gray-700 space-y-2 {{ $ba->hasSignatureFrom('PPK') ? 'bg-emerald-50/5 dark:bg-emerald-950/5 border-emerald-500/20' : 'bg-gray-50 dark:bg-gray-750' }}">
+                        <div class="p-4 rounded border dark:border-gray-700 space-y-2 {{ $ba->hasSignatureFrom('PPK') ? 'bg-emerald-50/5 dark:bg-emerald-950/5 border-emerald-500/20' : 'bg-gray-50 dark:bg-slate-900' }}">
                             <div class="flex justify-between font-bold text-gray-700 dark:text-gray-300">
                                 <span>Pejabat Pembuat Komitmen (PPK)</span>
                                 <span>{{ $ba->hasSignatureFrom('PPK') ? '✅ Signed' : '❌ Unsigned' }}</span>
@@ -257,7 +257,7 @@
 
                 <!-- Upload Form for PPK -->
                 @if(Auth::user()->jabatan_aktif === 'PPK' && $paket->ppk_id === Auth::id() && in_array($paket->status, ['draft', 'perlu_revisi']))
-                    <form action="{{ route('paket.upload-lampiran', $paket) }}" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 dark:bg-gray-750 p-4 rounded-lg mb-6 text-xs">
+                    <form action="{{ route('paket.upload-lampiran', $paket) }}" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 dark:bg-slate-900 p-4 rounded-lg mb-6 text-xs">
                         @csrf
                         <div>
                             <x-input-label for="tipe_dokumen" :value="__('Jenis Dokumen')" class="text-xs" />
@@ -287,7 +287,7 @@
                 @else
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
-                            <thead class="bg-gray-50 dark:bg-gray-750 text-gray-500 dark:text-gray-400">
+                            <thead class="bg-gray-50 dark:bg-slate-900 text-gray-500 dark:text-gray-400">
                                 <tr>
                                     <th class="px-6 py-3 text-left font-medium">Tipe Dokumen</th>
                                     <th class="px-6 py-3 text-left font-medium">Nama File</th>
@@ -323,7 +323,7 @@
 
                                             <!-- PP Review Interface per Document -->
                                             @if(Auth::user()->jabatan_aktif === 'PP' && $paket->pp_id === Auth::id() && in_array($paket->status, ['dikirim', 'kaji_ulang']))
-                                                <form action="{{ route('lampiran.review', $lampiran) }}" method="POST" class="bg-gray-50 dark:bg-gray-750 p-2.5 rounded text-left border dark:border-gray-700 space-y-2 mt-2 max-w-xs">
+                                                <form action="{{ route('lampiran.review', $lampiran) }}" method="POST" class="bg-gray-50 dark:bg-slate-900 p-2.5 rounded text-left border dark:border-gray-700 space-y-2 mt-2 max-w-xs">
                                                     @csrf
                                                     <span class="text-[10px] font-bold block text-gray-500">TINJAU DOKUMEN:</span>
                                                     <div class="flex space-x-2">
@@ -363,7 +363,7 @@
                         <p class="text-xs text-gray-500 dark:text-gray-400 py-4 text-center">Belum ada diskusi atau komentar.</p>
                     @else
                         @foreach($paket->comments as $comment)
-                            <div class="p-3 bg-gray-50 dark:bg-gray-750 rounded-lg text-xs space-y-1">
+                            <div class="p-3 bg-gray-50 dark:bg-slate-900 rounded-lg text-xs space-y-1">
                                 <div class="flex justify-between items-center text-gray-500 dark:text-gray-400">
                                     <div>
                                         <span class="font-bold text-gray-900 dark:text-white">{{ $comment->user->nama }}</span>
@@ -414,7 +414,7 @@
                     <h3 class="text-lg font-bold text-gray-900 dark:text-white border-b dark:border-gray-700 pb-2">Riwayat Mutasi & Transfer Tugas</h3>
                     <div class="overflow-x-auto text-xs">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead class="bg-gray-50 dark:bg-gray-750">
+                            <thead class="bg-gray-50 dark:bg-slate-900">
                                 <tr>
                                     <th class="px-4 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tanggal</th>
                                     <th class="px-4 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Dari</th>
@@ -426,7 +426,7 @@
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                                 @foreach($transfers as $t)
-                                    <tr class="hover:bg-gray-55 dark:hover:bg-gray-750">
+                                    <tr class="hover:bg-gray-55 dark:hover:bg-slate-900">
                                         <td class="px-4 py-3 whitespace-nowrap text-gray-500 dark:text-gray-400">
                                             {{ $t->created_at->format('d M Y, H:i') }} WIB
                                         </td>

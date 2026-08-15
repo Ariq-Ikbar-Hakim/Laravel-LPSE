@@ -14,9 +14,8 @@ test('new users can register with pending status', function () {
         'password' => 'password',
         'password_confirmation' => 'password',
         'opd' => 'Dinas Pekerjaan Umum',
-        'sub_unit_opd' => 'Bidang Bina Marga',
+        'no_telp' => '081234567890',
         'jabatan_aktif' => 'PPK',
-        'sk_nomor' => 'SK/123/2026',
     ]);
 
     $this->assertGuest();

@@ -30,9 +30,8 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'password' => static::$password ??= Hash::make('password'),
             'opd' => 'Dinas Pekerjaan Umum',
-            'sub_unit_opd' => 'Bidang Bina Marga',
+            'no_telp' => fake()->phoneNumber(),
             'jabatan_aktif' => fake()->randomElement(['admin', 'PPK', 'PP']),
-            'sk_nomor' => fake()->numerify('SK/###/2026'),
             'status_aktif' => 1,
             'remember_token' => Str::random(10),
         ];

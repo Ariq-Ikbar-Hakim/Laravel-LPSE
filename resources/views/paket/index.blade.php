@@ -82,7 +82,7 @@
                                             </span>
                                         </td>
                                         <td class="p-4 pr-6 text-center space-x-2">
-                                            <a href="{{ route('paket.show', $item) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-605 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/45 hover:text-indigo-650 dark:hover:text-indigo-400 transition">
+                                            <a href="{{ route('paket.show', $item) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/45 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
                                                 Detail
                                             </a>
                                             @if($item->status === 'draft')

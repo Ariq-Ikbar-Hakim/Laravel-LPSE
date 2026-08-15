@@ -12,19 +12,19 @@
 
             <!-- Search Card -->
             <div class="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm">
-                <form action="{{ route('admin.berita-acara.index') }}" method="GET" class="flex flex-col sm:flex-row gap-3">
+                <form action="{{ route('berita-acara.index') }}" method="GET" class="flex flex-col sm:flex-row gap-3">
                     <div class="relative flex-1">
                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
                             <i class="fa-solid fa-magnifying-glass text-xs"></i>
                         </span>
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nomor berita acara..." 
-                               class="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                               class="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-955 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                     </div>
-                    <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition">
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition cursor-pointer">
                         Cari
                     </button>
                     @if(request('search'))
-                        <a href="{{ route('admin.berita-acara.index') }}" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold transition text-center">
+                        <a href="{{ route('berita-acara.index') }}" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold transition text-center">
                             Clear
                         </a>
                     @endif
@@ -38,7 +38,7 @@
                 </h3>
 
                 @if($beritaAcara->isEmpty())
-                    <p class="text-sm text-slate-400 dark:text-slate-500 py-4 italic text-center">Belum ada data berita acara dibuat.</p>
+                    <p class="text-sm text-slate-400 dark:text-slate-500 py-4 italic text-center">Belum ada data berita acara.</p>
                 @else
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm">
@@ -52,7 +52,7 @@
                                     <th class="p-4 pr-6 text-center">Unduh Dokumen</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-655 dark:text-slate-300 font-medium">
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-600 dark:text-slate-300 font-medium">
                                 @foreach($beritaAcara as $ba)
                                     <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition">
                                         <td class="p-4 pl-6 font-mono text-xs font-semibold text-slate-900 dark:text-white">{{ $ba->nomor_ba }}</td>
@@ -62,7 +62,7 @@
                                             </a>
                                             <div class="text-[10px] text-slate-400 mt-0.5">RUP: {{ $ba->paket->kode_rup ?? '-' }}</div>
                                         </td>
-                                        <td class="p-4 text-xs text-slate-550 dark:text-slate-400">
+                                        <td class="p-4 text-xs text-slate-500 dark:text-slate-400">
                                             {{ $ba->created_at->format('d M Y, H:i') }}
                                         </td>
                                         <td class="p-4 text-xs">
@@ -72,7 +72,7 @@
                                             @php
                                                 $cls = match($ba->status) {
                                                     'draft'                 => 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
-                                                    'tanda_tangan_pertama'  => 'bg-amber-100 dark:bg-amber-950/40 text-amber-705 dark:text-amber-400',
+                                                    'tanda_tangan_pertama'  => 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400',
                                                     'tanda_tangan_kedua',
                                                     'selesai'               => 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400',
                                                     default                 => 'bg-slate-100 dark:bg-slate-850 text-slate-600 dark:text-slate-400',

@@ -9,7 +9,7 @@
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
-                    <p class="text-xs text-rose-600 dark:text-rose-400 font-semibold mb-4 bg-rose-50 dark:bg-gray-750 p-3 rounded">
+                    <p class="text-xs text-rose-600 dark:text-rose-400 font-semibold mb-4 bg-rose-50 dark:bg-slate-900 p-3 rounded">
                         Perhatian: Formulir ini digunakan oleh Pejabat Pengadaan (PP) untuk membuat Paket secara instan secara manual (tanpa melalui input PPK). Paket yang dibuat lewat formulir ini otomatis berstatus DISETUJUI, Metode: Manual (Dibuat PP), Sumber Dana: APBD, Jenis: Barang/Jasa.
                     </p>
 

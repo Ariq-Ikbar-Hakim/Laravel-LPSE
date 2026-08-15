@@ -24,6 +24,60 @@
                 </div>
             @endif
 
+            <!-- Pending Reset Requests Card -->
+            @if(isset($pendingResets) && !$pendingResets->isEmpty())
+                <div class="p-6 bg-amber-50/50 dark:bg-amber-950/10 border border-amber-200 dark:border-amber-900/40 rounded-3xl shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-amber-200/50 dark:border-amber-900/20 pb-3">
+                        <h3 class="text-lg font-bold text-amber-900 dark:text-amber-400 flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left text-amber-500 animate-spin-slow"></i>
+                            {{ __('Permintaan Reset Password Menunggu Persetujuan') }}
+                        </h3>
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300">
+                            {{ $pendingResets->count() }} Permintaan
+                        </span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="text-amber-850 dark:text-amber-400 font-semibold text-xs uppercase bg-amber-100/50 dark:bg-amber-950/20">
+                                    <th class="p-4 pl-6 rounded-l-xl">NIP</th>
+                                    <th class="p-4">Nama</th>
+                                    <th class="p-4">Email</th>
+                                    <th class="p-4">OPD</th>
+                                    <th class="p-4">Waktu Pengajuan</th>
+                                    <th class="p-4 pr-6 text-center rounded-r-xl">Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-amber-100/30 dark:divide-amber-900/10 text-amber-900/80 dark:text-slate-350 font-medium">
+                                @foreach($pendingResets as $user)
+                                    <tr class="hover:bg-amber-100/20 dark:hover:bg-amber-950/5 transition">
+                                        <td class="p-4 pl-6 font-mono text-xs">{{ $user->nip }}</td>
+                                        <td class="p-4 font-semibold text-amber-950 dark:text-white">{{ $user->nama }}</td>
+                                        <td class="p-4 text-xs">{{ $user->email }}</td>
+                                        <td class="p-4">
+                                            <div>{{ $user->opd }}</div>
+                                        </td>
+                                        <td class="p-4 text-xs">
+                                            {{ $user->reset_requested_at->diffForHumans() }}
+                                        </td>
+                                        <td class="p-4 pr-6 text-center">
+                                            <!-- Generate Reset Password Token -->
+                                            <form action="{{ route('admin.users.reset-token', $user) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui dan mengirimkan link reset password ke email user?')">
+                                                @csrf
+                                                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-1.5 px-4 rounded-xl text-xs transition duration-150 shadow-sm flex items-center gap-1.5 mx-auto cursor-pointer">
+                                                    <i class="fa-solid fa-paper-plane"></i> Setujui & Kirim Link
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+
             <!-- Search Card -->
             <div class="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm">
                 <form action="{{ route('admin.users.reset-password') }}" method="GET" class="flex flex-col sm:flex-row gap-3">
@@ -74,7 +128,6 @@
                                         <td class="p-4 text-xs">{{ $user->email }}</td>
                                         <td class="p-4">
                                             <div>{{ $user->opd }}</div>
-                                            <div class="text-xs text-slate-400 dark:text-slate-500 font-normal">{{ $user->sub_unit_opd }}</div>
                                         </td>
                                         <td class="p-4">
                                             <span class="px-2.5 py-1 rounded-full text-xs font-semibold

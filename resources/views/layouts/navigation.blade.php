@@ -14,7 +14,7 @@
                 </span>
             </div>
             <button @click="sidebarOpen = !sidebarOpen; localStorage.setItem('sidebar_open', sidebarOpen)"
-                    class="text-slate-400 hover:text-indigo-605 dark:hover:text-indigo-400 transition p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 hidden md:block"
+                    class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 hidden md:block"
                     title="Toggle Sidebar">
                 <i class="fa-solid" :class="sidebarOpen ? 'fa-chevron-left' : 'fa-chevron-right'"></i>
             </button>
@@ -32,27 +32,85 @@
                 <span class="text-sm font-semibold whitespace-nowrap overflow-hidden" x-show="sidebarOpen" x-transition>Dashboard</span>
             </a>
 
-            {{-- PPK: Paket Saya --}}
+            {{-- PPK: Pengadaan & Administrasi --}}
             @if(Auth::user()->jabatan_aktif === 'PPK')
+                {{-- Group: Pengadaan --}}
+                <div class="w-full flex flex-col gap-1 mt-3" x-show="sidebarOpen">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-4 mb-1">
+                        Pengadaan
+                    </span>
+                </div>
                 <a href="{{ route('paket.index') }}"
                    class="h-11 rounded-xl flex items-center transition hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200
                           {{ request()->routeIs('paket.*') ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}"
                    :class="sidebarOpen ? 'w-full px-4 gap-3 justify-start' : 'w-11 justify-center'"
-                   title="Paket Saya">
+                   title="Daftar Paket">
                     <i class="fa-solid fa-folder-open text-lg shrink-0"></i>
-                    <span class="text-sm font-semibold whitespace-nowrap overflow-hidden" x-show="sidebarOpen" x-transition>Paket Saya</span>
+                    <span class="text-sm font-semibold whitespace-nowrap overflow-hidden" x-show="sidebarOpen" x-transition>Daftar Paket</span>
+                </a>
+                <a href="{{ route('berita-acara.index') }}"
+                   class="h-11 rounded-xl flex items-center transition hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200
+                          {{ request()->routeIs('berita-acara.*') ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}"
+                   :class="sidebarOpen ? 'w-full px-4 gap-3 justify-start' : 'w-11 justify-center'"
+                   title="Berita Acara">
+                    <i class="fa-solid fa-file-invoice text-lg shrink-0"></i>
+                    <span class="text-sm font-semibold whitespace-nowrap overflow-hidden" x-show="sidebarOpen" x-transition>Berita Acara</span>
+                </a>
+
+                {{-- Group: Administrasi --}}
+                <div class="w-full flex flex-col gap-1 mt-3" x-show="sidebarOpen">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-4 mb-1">
+                        Administrasi
+                    </span>
+                </div>
+                <a href="{{ route('transfers.create') }}"
+                   class="h-11 rounded-xl flex items-center transition hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200
+                          {{ request()->routeIs('transfers.create') ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}"
+                   :class="sidebarOpen ? 'w-full px-4 gap-3 justify-start' : 'w-11 justify-center'"
+                   title="Transfer Jabatan">
+                    <i class="fa-solid fa-right-left text-lg shrink-0"></i>
+                    <span class="text-sm font-semibold whitespace-nowrap overflow-hidden" x-show="sidebarOpen" x-transition>Transfer Jabatan</span>
                 </a>
             @endif
 
-            {{-- PP: Review & Bypass --}}
+            {{-- PP: Pengadaan & Administrasi --}}
             @if(Auth::user()->jabatan_aktif === 'PP')
+                {{-- Group: Pengadaan --}}
+                <div class="w-full flex flex-col gap-1 mt-3" x-show="sidebarOpen">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-4 mb-1">
+                        Pengadaan
+                    </span>
+                </div>
                 <a href="{{ route('paket-review.index') }}"
                    class="h-11 rounded-xl flex items-center transition hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200
                           {{ request()->routeIs('paket-review.*') || request()->routeIs('paket-bypass.*') ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}"
                    :class="sidebarOpen ? 'w-full px-4 gap-3 justify-start' : 'w-11 justify-center'"
-                   title="Tinjau Paket">
+                   title="Daftar Paket">
                     <i class="fa-solid fa-folder-magnifying-glass text-lg shrink-0"></i>
-                    <span class="text-sm font-semibold whitespace-nowrap overflow-hidden" x-show="sidebarOpen" x-transition>Tinjau Paket</span>
+                    <span class="text-sm font-semibold whitespace-nowrap overflow-hidden" x-show="sidebarOpen" x-transition>Daftar Paket</span>
+                </a>
+                <a href="{{ route('berita-acara.index') }}"
+                   class="h-11 rounded-xl flex items-center transition hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200
+                          {{ request()->routeIs('berita-acara.*') ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}"
+                   :class="sidebarOpen ? 'w-full px-4 gap-3 justify-start' : 'w-11 justify-center'"
+                   title="Berita Acara">
+                    <i class="fa-solid fa-file-invoice text-lg shrink-0"></i>
+                    <span class="text-sm font-semibold whitespace-nowrap overflow-hidden" x-show="sidebarOpen" x-transition>Berita Acara</span>
+                </a>
+
+                {{-- Group: Administrasi --}}
+                <div class="w-full flex flex-col gap-1 mt-3" x-show="sidebarOpen">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-4 mb-1">
+                        Administrasi
+                    </span>
+                </div>
+                <a href="{{ route('transfers.create') }}"
+                   class="h-11 rounded-xl flex items-center transition hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200
+                          {{ request()->routeIs('transfers.create') ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}"
+                   :class="sidebarOpen ? 'w-full px-4 gap-3 justify-start' : 'w-11 justify-center'"
+                   title="Transfer Jabatan">
+                    <i class="fa-solid fa-right-left text-lg shrink-0"></i>
+                    <span class="text-sm font-semibold whitespace-nowrap overflow-hidden" x-show="sidebarOpen" x-transition>Transfer Jabatan</span>
                 </a>
             @endif
 
@@ -72,9 +130,9 @@
                     <i class="fa-solid fa-folder-open text-lg shrink-0"></i>
                     <span class="text-sm font-semibold whitespace-nowrap overflow-hidden" x-show="sidebarOpen" x-transition>Daftar Paket</span>
                 </a>
-                <a href="{{ route('admin.berita-acara.index') }}"
+                <a href="{{ route('berita-acara.index') }}"
                    class="h-11 rounded-xl flex items-center transition hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200
-                          {{ request()->routeIs('admin.berita-acara.*') ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}"
+                          {{ request()->routeIs('berita-acara.*') ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}"
                    :class="sidebarOpen ? 'w-full px-4 gap-3 justify-start' : 'w-11 justify-center'"
                    title="Berita Acara">
                     <i class="fa-solid fa-file-invoice text-lg shrink-0"></i>
@@ -102,14 +160,6 @@
                    title="Reset Password">
                     <i class="fa-solid fa-key text-lg shrink-0"></i>
                     <span class="text-sm font-semibold whitespace-nowrap overflow-hidden" x-show="sidebarOpen" x-transition>Reset Password</span>
-                </a>
-                <a href="{{ route('admin.users.transfer-jabatan') }}"
-                   class="h-11 rounded-xl flex items-center transition hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200
-                          {{ request()->routeIs('admin.users.transfer-jabatan') ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}"
-                   :class="sidebarOpen ? 'w-full px-4 gap-3 justify-start' : 'w-11 justify-center'"
-                   title="Transfer Jabatan">
-                    <i class="fa-solid fa-user-gear text-lg shrink-0"></i>
-                    <span class="text-sm font-semibold whitespace-nowrap overflow-hidden" x-show="sidebarOpen" x-transition>Transfer Jabatan</span>
                 </a>
                 <a href="{{ route('admin.transfers.index') }}"
                    class="h-11 rounded-xl flex items-center transition hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200

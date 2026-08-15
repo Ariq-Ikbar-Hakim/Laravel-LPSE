@@ -21,7 +21,7 @@ class User extends Authenticatable
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['nama', 'email', 'jabatan_aktif', 'status_aktif', 'opd', 'sub_unit_opd'])
+            ->logOnly(['nama', 'email', 'jabatan_aktif', 'status_aktif', 'opd', 'no_telp', 'foto_profil'])
             ->logOnlyDirty()
             ->dontLogEmptyChanges();
     }
@@ -30,12 +30,13 @@ class User extends Authenticatable
         'nip',
         'nama',
         'email',
+        'foto_profil',
         'password',
         'opd',
-        'sub_unit_opd',
+        'no_telp',
         'jabatan_aktif',
-        'sk_nomor',
         'status_aktif',
+        'reset_requested_at',
     ];
 
     protected $hidden = [
@@ -53,6 +54,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'reset_requested_at' => 'datetime',
         ];
     }
 }
