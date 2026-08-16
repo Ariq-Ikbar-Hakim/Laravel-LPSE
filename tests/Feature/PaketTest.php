@@ -9,11 +9,14 @@ use Illuminate\Support\Facades\Storage;
 
 test('PPK can create draft paket', function () {
     $ppk = User::factory()->create(['jabatan_aktif' => 'PPK', 'status_aktif' => 1]);
+    $pp = User::factory()->create(['jabatan_aktif' => 'PP', 'status_aktif' => 1]);
 
     $response = $this->actingAs($ppk)->post(route('paket.store'), [
         'kode_rup' => 'RUP-12345',
         'nama_paket' => 'Pengadaan Laptop Kantor',
         'pagu' => 150000000.00,
+        'tahun_anggaran' => '2026',
+        'pp_id' => $pp->id,
     ]);
 
     $response->assertRedirect();
@@ -22,6 +25,7 @@ test('PPK can create draft paket', function () {
         'nama_paket' => 'Pengadaan Laptop Kantor',
         'status' => 'draft',
         'ppk_id' => $ppk->id,
+        'pp_id' => $pp->id,
     ]);
 
     // Check log_paket observer
@@ -49,7 +53,7 @@ test('PPK can upload lampiran and name formatting versioning works', function ()
     // Check lampiran exists in DB
     $lampiran = Lampiran::where('paket_id', $paket->id)->first();
     $this->assertNotNull($lampiran);
-    $this->assertEquals('spesifikasi_teknis.pdf', $lampiran->nama_file);
+    $this->assertEquals('spesifikasi_teknisv1.pdf', $lampiran->nama_file);
     $this->assertEquals('pending', $lampiran->status_validasi);
 
     // Verify versioning name

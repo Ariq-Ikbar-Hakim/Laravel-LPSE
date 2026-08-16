@@ -12,14 +12,14 @@ test('PPK or PP can initiate a transfer request to another user with same role',
     $ppk2 = User::factory()->create(['jabatan_aktif' => 'PPK', 'status_aktif' => 1]);
     $paket = Paket::factory()->create(['ppk_id' => $ppk1->id, 'status' => 'draft']);
 
-    $response = $this->actingAs($ppk1)->post(route('paket.transfer.store', $paket), [
+    $response = $this->actingAs($ppk1)->post(route('transfers.store'), [
         'ke_user_id' => $ppk2->id,
         'alasan' => 'Pindah tugas ke dinas luar kota jangka panjang.',
     ]);
 
-    $response->assertRedirect(route('paket.show', $paket));
+    $response->assertRedirect(route('dashboard'));
     $this->assertDatabaseHas('assignment_transfers', [
-        'paket_id' => $paket->id,
+        'paket_id' => null,
         'dari_user_id' => $ppk1->id,
         'ke_user_id' => $ppk2->id,
         'tipe_transfer' => 'PPK',
@@ -28,39 +28,26 @@ test('PPK or PP can initiate a transfer request to another user with same role',
     ]);
 });
 
-test('Transfer request is blocked if package status is disetujui or selesai', function () {
+test('Transfer request is blocked if target user is not valid', function () {
     $ppk1 = User::factory()->create(['jabatan_aktif' => 'PPK', 'status_aktif' => 1]);
-    $ppk2 = User::factory()->create(['jabatan_aktif' => 'PPK', 'status_aktif' => 1]);
-    
-    // Paket disetujui
-    $paketDisetujui = Paket::factory()->create(['ppk_id' => $ppk1->id, 'status' => 'disetujui']);
-    $response = $this->actingAs($ppk1)->post(route('paket.transfer.store', $paketDisetujui), [
-        'ke_user_id' => $ppk2->id,
-        'alasan' => 'Pindah tugas.',
-    ]);
-    $response->assertRedirect();
-    $response->assertSessionHas('error');
-    $this->assertDatabaseMissing('assignment_transfers', ['paket_id' => $paketDisetujui->id]);
+    $invalidUser = User::factory()->create(['jabatan_aktif' => 'admin', 'status_aktif' => 1]); // Admin is invalid target
 
-    // Paket selesai
-    $paketSelesai = Paket::factory()->create(['ppk_id' => $ppk1->id, 'status' => 'selesai']);
-    $response = $this->actingAs($ppk1)->post(route('paket.transfer.store', $paketSelesai), [
-        'ke_user_id' => $ppk2->id,
+    $response = $this->actingAs($ppk1)->post(route('transfers.store'), [
+        'ke_user_id' => $invalidUser->id,
         'alasan' => 'Pindah tugas.',
     ]);
-    $response->assertRedirect();
-    $response->assertSessionHas('error');
-    $this->assertDatabaseMissing('assignment_transfers', ['paket_id' => $paketSelesai->id]);
+
+    $response->assertSessionHasErrors('ke_user_id');
+    $this->assertDatabaseMissing('assignment_transfers', ['dari_user_id' => $ppk1->id]);
 });
 
 test('Transfer request is blocked if there is already a pending transfer request', function () {
     $ppk1 = User::factory()->create(['jabatan_aktif' => 'PPK', 'status_aktif' => 1]);
     $ppk2 = User::factory()->create(['jabatan_aktif' => 'PPK', 'status_aktif' => 1]);
-    $paket = Paket::factory()->create(['ppk_id' => $ppk1->id, 'status' => 'draft']);
 
     // Request pertama
     AssignmentTransfer::create([
-        'paket_id' => $paket->id,
+        'paket_id' => null,
         'dari_user_id' => $ppk1->id,
         'ke_user_id' => $ppk2->id,
         'tipe_transfer' => 'PPK',
@@ -69,13 +56,13 @@ test('Transfer request is blocked if there is already a pending transfer request
     ]);
 
     // Request kedua -> Gagal
-    $response = $this->actingAs($ppk1)->post(route('paket.transfer.store', $paket), [
+    $response = $this->actingAs($ppk1)->post(route('transfers.store'), [
         'ke_user_id' => $ppk2->id,
         'alasan' => 'Alasan kedua.',
     ]);
     $response->assertRedirect();
     $response->assertSessionHas('error');
-    $this->assertEquals(1, AssignmentTransfer::where('paket_id', $paket->id)->count());
+    $this->assertEquals(1, AssignmentTransfer::where('dari_user_id', $ppk1->id)->count());
 });
 
 test('Admin can view transfer list and approve a transfer request', function () {
@@ -85,7 +72,7 @@ test('Admin can view transfer list and approve a transfer request', function () 
     $paket = Paket::factory()->create(['ppk_id' => $ppk1->id, 'status' => 'draft']);
 
     $transfer = AssignmentTransfer::create([
-        'paket_id' => $paket->id,
+        'paket_id' => null,
         'dari_user_id' => $ppk1->id,
         'ke_user_id' => $ppk2->id,
         'tipe_transfer' => 'PPK',
@@ -110,7 +97,7 @@ test('Admin can view transfer list and approve a transfer request', function () 
     // Cek pencatatan di log_paket
     $this->assertDatabaseHas('log_paket', [
         'paket_id' => $paket->id,
-        'aksi' => 'MUTASI_TUGAS',
+        'aksi' => 'SWAP_JABATAN',
     ]);
 });
 
@@ -121,7 +108,7 @@ test('Admin can reject a transfer request with reason notes', function () {
     $paket = Paket::factory()->create(['ppk_id' => $ppk1->id, 'status' => 'draft']);
 
     $transfer = AssignmentTransfer::create([
-        'paket_id' => $paket->id,
+        'paket_id' => null,
         'dari_user_id' => $ppk1->id,
         'ke_user_id' => $ppk2->id,
         'tipe_transfer' => 'PPK',
