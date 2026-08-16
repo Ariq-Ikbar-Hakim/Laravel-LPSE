@@ -64,12 +64,49 @@ class PaketReviewController extends Controller
         Gate::authorize('view', $paket);
 
         $request->validate([
-            'status' => ['required', 'string', 'in:perlu_revisi,disetujui,kaji_ulang'],
+            'status' => ['required', 'string', 'in:perlu_revisi,disetujui,kaji_ulang,batal'],
+            'catatan' => ['nullable', 'string'],
+            'revisi_lampiran' => ['nullable', 'array'],
+            'revisi_lampiran.*' => ['exists:lampiran,id'],
         ]);
 
         $paket->update([
             'status' => $request->status,
         ]);
+
+        // Jika disetujui, kita setujui semua lampiran yang masih pending
+        if ($request->status === 'disetujui') {
+            $paket->lampiran()->where('status_validasi', 'pending')->update(['status_validasi' => 'disetujui']);
+        }
+
+        // Jika perlu revisi, update status lampiran yang dipilih dan buat komentar
+        if ($request->status === 'perlu_revisi' && $request->filled('revisi_lampiran')) {
+            foreach ($request->revisi_lampiran as $lampiranId) {
+                $lampiran = Lampiran::find($lampiranId);
+                if ($lampiran && $lampiran->paket_id === $paket->id) {
+                    $lampiran->update(['status_validasi' => 'revisi']);
+                    
+                    if ($request->filled('catatan')) {
+                        DocumentComment::create([
+                            'paket_id' => $paket->id,
+                            'lampiran_id' => $lampiran->id,
+                            'user_id' => Auth::id(),
+                            'role_saat_komentar' => Auth::user()->jabatan_aktif,
+                            'komentar' => $request->catatan,
+                        ]);
+                    }
+                }
+            }
+        } elseif ($request->filled('catatan')) {
+            // Komentar umum (tanpa lampiran spesifik)
+            DocumentComment::create([
+                'paket_id' => $paket->id,
+                'lampiran_id' => null,
+                'user_id' => Auth::id(),
+                'role_saat_komentar' => Auth::user()->jabatan_aktif,
+                'komentar' => $request->catatan,
+            ]);
+        }
 
         return redirect()->back()->with('success', "Status review paket berhasil diubah menjadi: " . str_replace('_', ' ', ucfirst($request->status)));
     }

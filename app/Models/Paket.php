@@ -35,6 +35,8 @@ class Paket extends Model
         'metode',
         'sumber_dana',
         'jenis',
+        'tahun_anggaran',
+        'keterangan_tambahan',
     ];
 
     protected $casts = [
