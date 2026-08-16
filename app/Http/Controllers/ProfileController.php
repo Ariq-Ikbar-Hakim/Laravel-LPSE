@@ -30,6 +30,18 @@ class ProfileController extends Controller
     {
         $user = $request->user();
         
+        \Illuminate\Support\Facades\Log::info('Profile Update Request received', [
+            'all_inputs' => $request->all(),
+            'has_file' => $request->hasFile('foto_profil'),
+            'file_details' => $request->file('foto_profil') ? [
+                'name' => $request->file('foto_profil')->getClientOriginalName(),
+                'size' => $request->file('foto_profil')->getSize(),
+                'mime' => $request->file('foto_profil')->getMimeType(),
+                'is_valid' => $request->file('foto_profil')->isValid(),
+                'error' => $request->file('foto_profil')->getError(),
+            ] : 'No file',
+        ]);
+        
         $validated = $request->validated();
         // Hapus foto_profil dari data validated agar tidak menimpa foto profil lama dengan null
         unset($validated['foto_profil']);
@@ -49,6 +61,7 @@ class ProfileController extends Controller
             }
             $path = $request->file('foto_profil')->store('avatars', 'public');
             $user->foto_profil = $path;
+            \Illuminate\Support\Facades\Log::info('Profile Photo Stored successfully', ['path' => $path]);
         }
 
         $user->save();

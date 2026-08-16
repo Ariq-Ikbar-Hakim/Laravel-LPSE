@@ -28,7 +28,7 @@ class ProfileUpdateRequest extends FormRequest
             ],
             'opd' => ['required', 'string', 'max:255'],
             'no_telp' => ['required', 'string', 'max:20'],
-            'foto_profil' => ['nullable', 'image', 'mimes:png,jpg,jpeg,gif', 'max:10240'],
+            'foto_profil' => ['nullable', 'image', 'mimes:png,jpg,jpeg,gif,webp', 'max:10240'],
             'remove_photo' => ['nullable', 'boolean'],
         ];
     }

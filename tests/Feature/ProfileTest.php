@@ -67,3 +67,29 @@ test('correct password must be provided to delete account', function () {
 
     $this->assertNotNull($user->fresh());
 });
+
+test('user can upload profile photo', function () {
+    \Illuminate\Support\Facades\Storage::fake('public');
+    
+    $user = User::factory()->create(['status_aktif' => 1]);
+    $file = \Illuminate\Http\UploadedFile::fake()->image('avatar.jpg');
+
+    $response = $this
+        ->actingAs($user)
+        ->patch('/profile', [
+            'nama' => $user->nama,
+            'email' => $user->email,
+            'opd' => $user->opd ?? 'OPD Test',
+            'no_telp' => $user->no_telp ?? '081234567890',
+            'foto_profil' => $file,
+        ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect('/profile');
+
+    $user->refresh();
+    $this->assertNotNull($user->foto_profil);
+    
+    // Check file exists in fake storage
+    \Illuminate\Support\Facades\Storage::disk('public')->assertExists($user->foto_profil);
+});

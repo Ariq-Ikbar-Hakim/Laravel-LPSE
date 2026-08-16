@@ -41,7 +41,8 @@
                         Hapus
                     </button>
                 </div>
-                <p class="text-[11px] text-slate-450 dark:text-slate-500 font-medium">Mendukung format PNG, JPEG atau GIF. Ukuran maksimum 10MB.</p>
+                <p class="text-[11px] text-slate-450 dark:text-slate-500 font-medium">Mendukung format PNG, JPEG, WEBP atau GIF. Ukuran maksimum 10MB.</p>
+                <x-input-error class="mt-1 text-xs text-rose-500" :messages="$errors->get('foto_profil')" />
             </div>
         </div>
 
