@@ -29,7 +29,12 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $user = $request->user();
-        $user->fill($request->validated());
+        
+        $validated = $request->validated();
+        // Hapus foto_profil dari data validated agar tidak menimpa foto profil lama dengan null
+        unset($validated['foto_profil']);
+        
+        $user->fill($validated);
 
         if ($request->input('remove_photo') == 1) {
             if ($user->foto_profil) {
