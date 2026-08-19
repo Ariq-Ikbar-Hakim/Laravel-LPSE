@@ -77,9 +77,13 @@
                             <i class="fa-solid fa-gear"></i>
                         </a>
                         <div class="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800">
-                            <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm ring-2 ring-indigo-500/20">
-                                {{ strtoupper(substr(Auth::user()->nama, 0, 2)) }}
-                            </div>
+                            @if(Auth::user()->foto_profil)
+                                <img src="{{ asset('storage/' . Auth::user()->foto_profil) }}" alt="{{ Auth::user()->nama }}" class="w-10 h-10 rounded-full object-cover ring-2 ring-indigo-500/20">
+                            @else
+                                <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 ring-2 ring-indigo-500/10">
+                                    <i class="fa-solid fa-user text-sm"></i>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </header>

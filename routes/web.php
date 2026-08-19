@@ -4,7 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 use App\Http\Controllers\DashboardController;
@@ -14,6 +14,7 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\VerificationController;
 use App\Http\Controllers\AssignmentTransferController;
+use App\Http\Controllers\BeritaAcaraController;
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
 
@@ -45,6 +46,11 @@ Route::middleware('auth')->group(function () {
         Route::post('lampiran/{lampiran}/review', [PaketReviewController::class, 'reviewLampiran'])->name('lampiran.review');
         Route::get('paket-bypass/create', [PaketReviewController::class, 'bypassCreate'])->name('paket-bypass.create');
         Route::post('paket-bypass', [PaketReviewController::class, 'bypassStore'])->name('paket-bypass.store');
+        
+        // CRUD Berita Acara Manual oleh PP
+        Route::post('berita-acara/manual', [BeritaAcaraController::class, 'storeManual'])->name('berita-acara.store-manual');
+        Route::put('berita-acara/{beritaAcara}/manual', [BeritaAcaraController::class, 'updateManual'])->name('berita-acara.update-manual');
+        Route::delete('berita-acara/{beritaAcara}/manual', [BeritaAcaraController::class, 'destroyManual'])->name('berita-acara.destroy-manual');
     });
 
     // Detail paket dan komentar dinamis (Wildcards di bagian bawah)

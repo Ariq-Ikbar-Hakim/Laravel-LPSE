@@ -37,21 +37,6 @@ class PaketObserver
                 'keterangan' => "Status paket diubah dari '{$oldStatus}' menjadi '{$newStatus}'.",
             ]);
 
-            // Jika status berubah ke disetujui, buat Berita Acara baru jika belum ada
-            if ($newStatus === 'disetujui') {
-                $existingBa = \App\Models\BeritaAcara::where('paket_id', $paket->id)->first();
-                if (!$existingBa) {
-                    $tahun = date('Y');
-                    $nomorBa = "BA/{$paket->id}/LPSE/{$tahun}";
-                    
-                    \App\Models\BeritaAcara::create([
-                        'paket_id' => $paket->id,
-                        'nomor_ba' => $nomorBa,
-                        'verification_hash' => \Illuminate\Support\Str::random(40),
-                        'status' => 'draft',
-                    ]);
-                }
-            }
 
             // Jika status dirubah ke perlu_revisi, hapus seluruh signatures BA dan kembalikan status BA ke draft
             if ($newStatus === 'perlu_revisi') {

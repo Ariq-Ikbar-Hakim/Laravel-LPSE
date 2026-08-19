@@ -16,9 +16,14 @@ class BeritaAcara extends Model
     protected $fillable = [
         'paket_id',
         'nomor_ba',
+        'tanggal_ba',
         'file_laporan',
         'verification_hash',
         'status',
+    ];
+
+    protected $casts = [
+        'tanggal_ba' => 'date',
     ];
 
     public function paket(): BelongsTo

@@ -153,14 +153,21 @@ class PaketReviewController extends Controller
     {
         $user = Auth::user();
 
+        $request->validate([
+            'signature_image' => ['required', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
+        ]);
+
         if ($user->jabatan_aktif === 'PP') {
             Gate::authorize('signAsPp', $beritaAcara);
+
+            $path = $request->file('signature_image')->store('signatures', 'public');
 
             \App\Models\Signature::create([
                 'berita_acara_id' => $beritaAcara->id,
                 'user_id' => $user->id,
                 'role_saat_ttd' => 'PP',
                 'urutan' => 1,
+                'signature_image' => $path,
                 'ip_address' => $request->ip(),
                 'signed_at' => now(),
             ]);
@@ -175,12 +182,15 @@ class PaketReviewController extends Controller
         if ($user->jabatan_aktif === 'PPK') {
             Gate::authorize('signAsPpk', $beritaAcara);
 
+            $path = $request->file('signature_image')->store('signatures', 'public');
+
             // Simpan tanda tangan PPK
             $signaturePpk = \App\Models\Signature::create([
                 'berita_acara_id' => $beritaAcara->id,
                 'user_id' => $user->id,
                 'role_saat_ttd' => 'PPK',
                 'urutan' => 2,
+                'signature_image' => $path,
                 'ip_address' => $request->ip(),
                 'signed_at' => now(),
             ]);

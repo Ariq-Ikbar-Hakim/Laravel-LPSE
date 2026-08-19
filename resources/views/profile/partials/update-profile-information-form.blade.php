@@ -16,8 +16,8 @@
         <div class="flex items-center gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
             <div class="relative shrink-0">
                 @php
-                    $initialsUrl = 'https://ui-avatars.com/api/?name=' . urlencode($user->nama) . '&background=6366f1&color=fff&size=128';
-                    $avatarUrl = $user->foto_profil ? asset('storage/' . $user->foto_profil) : $initialsUrl;
+                    $defaultAvatarUrl = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none"><circle cx="64" cy="64" r="64" fill="%23e2e8f0"/><path d="M64 68c15.464 0 28-12.536 28-28S79.464 12 64 12s-28 12.536-28 28 12.536 28 28 28zm0 12c-22.091 0-40 17.909-40 40h80c0-22.091-17.909-40-40-40z" fill="%2394a3b8"/></svg>';
+                    $avatarUrl = $user->foto_profil ? asset('storage/' . $user->foto_profil) : $defaultAvatarUrl;
                 @endphp
                 <img id="avatar_preview" src="{{ $avatarUrl }}" alt="Foto Profil" 
                      class="w-24 h-24 rounded-full object-cover border-2 border-slate-200 dark:border-slate-800 shadow-sm">
@@ -164,7 +164,7 @@
         }
 
         function removeImage() {
-            document.getElementById('avatar_preview').src = '{{ $initialsUrl }}';
+            document.getElementById('avatar_preview').src = '{{ $defaultAvatarUrl }}';
             document.getElementById('foto_profil_input').value = '';
             document.getElementById('remove_photo_input').value = 1;
             document.getElementById('btn_remove_avatar').classList.add('hidden');

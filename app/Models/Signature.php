@@ -18,6 +18,7 @@ class Signature extends Model
         'role_saat_ttd',
         'urutan',
         'qr_code_path',
+        'signature_image',
         'hash_dokumen',
         'ip_address',
         'signed_at',

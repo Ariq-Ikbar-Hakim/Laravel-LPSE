@@ -252,7 +252,17 @@ class PaketController extends Controller
         }
 
         $beritaAcara = $query->latest()->paginate(15);
+        $ppkUsers = \App\Models\User::where('jabatan_aktif', 'PPK')->where('status_aktif', 1)->orderBy('nama')->get();
+        
+        $availablePaket = collect();
+        if ($user->jabatan_aktif === 'PP') {
+            $availablePaket = \App\Models\Paket::where('pp_id', $user->id)
+                ->whereDoesntHave('beritaAcara')
+                ->whereIn('status', ['dikirim', 'disetujui', 'proses_ba', 'perlu_revisi'])
+                ->orderBy('nama_paket')
+                ->get();
+        }
 
-        return view('berita-acara.index', compact('beritaAcara'));
+        return view('berita-acara.index', compact('beritaAcara', 'ppkUsers', 'availablePaket'));
     }
 }

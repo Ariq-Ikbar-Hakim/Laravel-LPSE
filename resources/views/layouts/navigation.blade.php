@@ -86,7 +86,7 @@
                           {{ request()->routeIs('paket-review.*') || request()->routeIs('paket-bypass.*') ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}"
                    :class="sidebarOpen ? 'w-full px-4 gap-3 justify-start' : 'w-11 justify-center'"
                    title="Daftar Paket">
-                    <i class="fa-solid fa-folder-magnifying-glass text-lg shrink-0"></i>
+                    <i class="fa-solid fa-folder-open text-lg shrink-0"></i>
                     <span class="text-sm font-semibold whitespace-nowrap overflow-hidden" x-show="sidebarOpen" x-transition>Daftar Paket</span>
                 </a>
                 <a href="{{ route('berita-acara.index') }}"

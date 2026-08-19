@@ -234,41 +234,7 @@
                                 </div>
                                 @endif
 
-                                <!-- Transfer Jabatan Card -->
-                                @php
-                                    $isOwner = false;
-                                    $user = Auth::user();
-                                    if ($user->jabatan_aktif === 'PPK' && $paket->ppk_id === $user->id) {
-                                        $isOwner = true;
-                                    } elseif ($user->jabatan_aktif === 'PP' && $paket->pp_id === $user->id) {
-                                        $isOwner = true;
-                                    }
-                                @endphp
-                                @if($isOwner)
-                                    @php
-                                        $pendingSwap = \App\Models\AssignmentTransfer::where('dari_user_id', $user->id)
-                                            ->where('status', 'menunggu')
-                                            ->first();
-                                    @endphp
-                                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-                                        <div class="flex items-center gap-3 mb-3">
-                                            <i class="fa-solid fa-right-left text-indigo-600"></i>
-                                            <h3 class="font-bold text-slate-800 dark:text-white text-sm">Transfer Jabatan & Tugas</h3>
-                                        </div>
-                                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
-                                            Ajukan pemindahan wewenang paket ini ke personil lain jika diperlukan.
-                                        </p>
-                                        @if($pendingSwap)
-                                            <div class="p-3 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 rounded-xl border border-amber-100 dark:border-amber-900/30 text-xs">
-                                                <strong>Mutasi Pending:</strong> Pengajuan transfer jabatan dengan <span class="font-semibold text-slate-900 dark:text-white">{{ $pendingSwap->keUser->nama }}</span> sedang menunggu persetujuan Admin.
-                                            </div>
-                                        @else
-                                            <a href="{{ route('transfers.create') }}" class="block text-center bg-indigo-600 hover:bg-indigo-705 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition duration-150 uppercase tracking-widest cursor-pointer shadow-sm">
-                                                Ajukan Transfer Jabatan
-                                            </a>
-                                        @endif
-                                    </div>
-                                @endif
+
                             </div>
                             
                         </div>
@@ -288,41 +254,7 @@
                                     </button>
                                 @endif
 
-                                <!-- Transfer Jabatan Card -->
-                                @php
-                                    $isOwner = false;
-                                    $user = Auth::user();
-                                    if ($user->jabatan_aktif === 'PPK' && $paket->ppk_id === $user->id) {
-                                        $isOwner = true;
-                                    } elseif ($user->jabatan_aktif === 'PP' && $paket->pp_id === $user->id) {
-                                        $isOwner = true;
-                                    }
-                                @endphp
-                                @if($isOwner)
-                                    @php
-                                        $pendingSwap = \App\Models\AssignmentTransfer::where('dari_user_id', $user->id)
-                                            ->where('status', 'menunggu')
-                                            ->first();
-                                    @endphp
-                                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-                                        <div class="flex items-center gap-3 mb-3">
-                                            <i class="fa-solid fa-right-left text-indigo-600"></i>
-                                            <h3 class="font-bold text-slate-800 dark:text-white text-sm">Transfer Jabatan & Tugas</h3>
-                                        </div>
-                                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
-                                            Ajukan pemindahan wewenang paket ini ke personil lain jika diperlukan.
-                                        </p>
-                                        @if($pendingSwap)
-                                            <div class="p-3 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 rounded-xl border border-amber-100 dark:border-amber-900/30 text-xs">
-                                                <strong>Mutasi Pending:</strong> Pengajuan transfer jabatan dengan <span class="font-semibold text-slate-900 dark:text-white">{{ $pendingSwap->keUser->nama }}</span> sedang menunggu persetujuan Admin.
-                                            </div>
-                                        @else
-                                            <a href="{{ route('transfers.create') }}" class="block text-center bg-indigo-600 hover:bg-indigo-705 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition duration-150 uppercase tracking-widest cursor-pointer shadow-sm">
-                                                Ajukan Transfer Jabatan
-                                            </a>
-                                        @endif
-                                    </div>
-                                @endif
+
                             </div>
                             
                             <div class="overflow-x-auto">

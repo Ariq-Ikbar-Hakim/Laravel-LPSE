@@ -30,6 +30,7 @@ class Paket extends Model
         'kode_rup',
         'nama_paket',
         'pagu',
+        'hps',
         'status',
         'dilihat_admin_at',
         'metode',
@@ -42,6 +43,7 @@ class Paket extends Model
     protected $casts = [
         'dilihat_admin_at' => 'datetime',
         'pagu' => 'decimal:2',
+        'hps' => 'decimal:2',
     ];
 
     public function ppk(): BelongsTo

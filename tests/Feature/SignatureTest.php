@@ -24,6 +24,7 @@ test('Berita Acara auto generated when package is approved', function () {
 });
 
 test('PP can sign first and PPK is blocked before PP signs', function () {
+    Storage::fake('public');
     $ppk = User::factory()->create(['jabatan_aktif' => 'PPK', 'status_aktif' => 1]);
     $pp = User::factory()->create(['jabatan_aktif' => 'PP', 'status_aktif' => 1]);
     $paket = Paket::factory()->create(['ppk_id' => $ppk->id, 'pp_id' => $pp->id, 'status' => 'draft']);
@@ -33,13 +34,17 @@ test('PP can sign first and PPK is blocked before PP signs', function () {
     $this->assertNotNull($ba);
 
     // PPK tries to sign before PP -> Expect Forbidden (403)
-    $response = $this->actingAs($ppk)->post(route('berita-acara.sign', $ba));
+    $response = $this->actingAs($ppk)->post(route('berita-acara.sign', $ba), [
+        'signature_image' => UploadedFile::fake()->image('sig.png')
+    ]);
     $response->assertStatus(403);
     $this->assertFalse($ba->hasSignatureFrom('PPK'));
 
     // PP signs -> Success
     $this->flushSession();
-    $response = $this->actingAs($pp)->post(route('berita-acara.sign', $ba));
+    $response = $this->actingAs($pp)->post(route('berita-acara.sign', $ba), [
+        'signature_image' => UploadedFile::fake()->image('sig.png')
+    ]);
     $response->assertRedirect();
     $this->assertTrue($ba->fresh()->hasSignatureFrom('PP'));
     $this->assertEquals('tanda_tangan_pertama', $ba->fresh()->status);
@@ -61,12 +66,16 @@ test('PPK is blocked on bypass package signature if no approved lampirans', func
     $ba = BeritaAcara::where('paket_id', $paket->id)->first();
 
     // PP signs first
-    $this->actingAs($pp)->post(route('berita-acara.sign', $ba));
+    $this->actingAs($pp)->post(route('berita-acara.sign', $ba), [
+        'signature_image' => UploadedFile::fake()->image('sig.png')
+    ]);
     $this->assertEquals('tanda_tangan_pertama', $ba->fresh()->status);
 
     // PPK tries to sign -> Expect Forbidden (403) since no lampiran is approved
     $this->flushSession();
-    $response = $this->actingAs($ppk)->post(route('berita-acara.sign', $ba));
+    $response = $this->actingAs($ppk)->post(route('berita-acara.sign', $ba), [
+        'signature_image' => UploadedFile::fake()->image('sig.png')
+    ]);
     $response->assertStatus(403);
 
     // Upload and approve a lampiran
@@ -81,7 +90,9 @@ test('PPK is blocked on bypass package signature if no approved lampirans', func
 
     // PPK signs now -> Success
     $this->flushSession();
-    $response = $this->actingAs($ppk)->post(route('berita-acara.sign', $ba));
+    $response = $this->actingAs($ppk)->post(route('berita-acara.sign', $ba), [
+        'signature_image' => UploadedFile::fake()->image('sig.png')
+    ]);
     $response->assertRedirect();
     $this->assertEquals('selesai', $ba->fresh()->status);
     $this->assertEquals('selesai', $paket->fresh()->status);
@@ -97,11 +108,15 @@ test('Both signatures complete finalizes BA, calculates SHA256 and saves QR Code
     $ba = BeritaAcara::where('paket_id', $paket->id)->first();
 
     // 1. PP signs
-    $this->actingAs($pp)->post(route('berita-acara.sign', $ba));
+    $this->actingAs($pp)->post(route('berita-acara.sign', $ba), [
+        'signature_image' => UploadedFile::fake()->image('sig.png')
+    ]);
 
     // 2. PPK signs
     $this->flushSession();
-    $response = $this->actingAs($ppk)->post(route('berita-acara.sign', $ba));
+    $response = $this->actingAs($ppk)->post(route('berita-acara.sign', $ba), [
+        'signature_image' => UploadedFile::fake()->image('sig.png')
+    ]);
     $response->assertSessionHasNoErrors();
 
     $ba = $ba->fresh();
@@ -131,9 +146,13 @@ test('Rollback status to perlu_revisi deletes signatures and resets BA', functio
     $ba = BeritaAcara::where('paket_id', $paket->id)->first();
 
     // Both sign
-    $this->actingAs($pp)->post(route('berita-acara.sign', $ba));
+    $this->actingAs($pp)->post(route('berita-acara.sign', $ba), [
+        'signature_image' => UploadedFile::fake()->image('sig.png')
+    ]);
     $this->flushSession();
-    $this->actingAs($ppk)->post(route('berita-acara.sign', $ba));
+    $this->actingAs($ppk)->post(route('berita-acara.sign', $ba), [
+        'signature_image' => UploadedFile::fake()->image('sig.png')
+    ]);
 
     $this->assertEquals(2, $ba->signatures()->count());
 
@@ -157,9 +176,13 @@ test('Public verification details page and PDF upload validator work', function 
     $ba = BeritaAcara::where('paket_id', $paket->id)->first();
     
     // Both sign to finalize BA
-    $this->actingAs($pp)->post(route('berita-acara.sign', $ba));
+    $this->actingAs($pp)->post(route('berita-acara.sign', $ba), [
+        'signature_image' => UploadedFile::fake()->image('sig.png')
+    ]);
     $this->flushSession();
-    $this->actingAs($ppk)->post(route('berita-acara.sign', $ba));
+    $this->actingAs($ppk)->post(route('berita-acara.sign', $ba), [
+        'signature_image' => UploadedFile::fake()->image('sig.png')
+    ]);
     $ba = $ba->fresh();
 
     // Verify guest access (public verification page)
