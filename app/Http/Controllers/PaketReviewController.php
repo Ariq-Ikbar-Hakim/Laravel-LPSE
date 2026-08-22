@@ -77,6 +77,18 @@ class PaketReviewController extends Controller
         // Jika disetujui, kita setujui semua lampiran yang masih pending
         if ($request->status === 'disetujui') {
             $paket->lampiran()->where('status_validasi', 'pending')->update(['status_validasi' => 'disetujui']);
+            
+            // Otomatis buat Berita Acara jika belum ada agar PP bisa langsung tanda tangan
+            $beritaAcara = \App\Models\BeritaAcara::where('paket_id', $paket->id)->first();
+            if (!$beritaAcara) {
+                \App\Models\BeritaAcara::create([
+                    'paket_id' => $paket->id,
+                    'nomor_ba' => 'BA/' . date('Y/m/d') . '/' . $paket->id,
+                    'tanggal_ba' => now(),
+                    'status' => 'draft',
+                    'verification_hash' => \Illuminate\Support\Str::random(40),
+                ]);
+            }
         }
 
         // Jika perlu revisi, update status lampiran yang dipilih dan buat komentar
@@ -204,38 +216,29 @@ class PaketReviewController extends Controller
                 'status' => 'selesai',
             ]);
 
-            // 1. Generate QR Code
-            $qrCodePath = "qrcodes/qr_{$beritaAcara->verification_hash}.svg";
-            $verificationUrl = route('verify', $beritaAcara->verification_hash);
-            
-            // Buat folder qrcodes jika belum ada
-            if (!\Illuminate\Support\Facades\Storage::disk('public')->exists('qrcodes')) {
-                \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory('qrcodes');
-            }
-            
-            $qrCodeContent = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->generate($verificationUrl);
-            \Illuminate\Support\Facades\Storage::disk('public')->put($qrCodePath, $qrCodeContent);
-
-            // Update path QR Code pada signature
-            $signaturePpk->update(['qr_code_path' => $qrCodePath]);
-            $beritaAcara->ppSignature()->update(['qr_code_path' => $qrCodePath]);
-
             // 2. Generate PDF Final
-            $pdfPath = "berita-acara/ba_{$beritaAcara->id}.pdf";
-            
+            $timestamp = time();
+            $pdfFileName = "BA_Paket_{$beritaAcara->paket_id}_{$timestamp}.pdf";
+            $pdfPath = "berita-acara/{$pdfFileName}";
             if (!\Illuminate\Support\Facades\Storage::disk('public')->exists('berita-acara')) {
                 \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory('berita-acara');
             }
 
-            // Memuat file PDF dengan layout
             $paket = $beritaAcara->paket;
+            $signatures = $beritaAcara->signatures;
+            
             $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.berita_acara', [
                 'beritaAcara' => $beritaAcara,
                 'paket' => $paket,
-                'qrCodePath' => storage_path("app/public/{$qrCodePath}"),
-            ]);
+                'signatures' => $signatures
+            ])->setPaper('a4', 'portrait');
 
-            \Illuminate\Support\Facades\Storage::disk('public')->put($pdfPath, $pdf->output());
+            $pdfContent = $pdf->output();
+
+            $pdfName = 'BA_Paket_' . $paket->id . '_' . time() . '.pdf';
+            $pdfPath = 'berita-acara/' . $pdfName;
+            
+            \Illuminate\Support\Facades\Storage::disk('public')->put($pdfPath, $pdfContent);
 
             // 3. Hitung SHA-256 dan simpan di signatures
             $fileContent = \Illuminate\Support\Facades\Storage::disk('public')->get($pdfPath);

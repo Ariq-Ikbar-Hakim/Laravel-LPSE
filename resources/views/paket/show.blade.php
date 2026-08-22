@@ -92,8 +92,11 @@
                     <button @click="activeTab = 'lampiran'" :class="{ 'border-blue-600 text-blue-600': activeTab === 'lampiran', 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300': activeTab !== 'lampiran' }" class="whitespace-nowrap py-4 px-2 border-b-2 font-bold text-sm flex items-center gap-2 transition mr-6">
                         <i class="fa-solid fa-folder-open"></i> Dokumen Lampiran
                     </button>
-                    <button @click="activeTab = 'diskusi'" :class="{ 'border-blue-600 text-blue-600': activeTab === 'diskusi', 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300': activeTab !== 'diskusi' }" class="whitespace-nowrap py-4 px-2 border-b-2 font-bold text-sm flex items-center gap-2 transition">
+                    <button @click="activeTab = 'diskusi'" :class="{ 'border-blue-600 text-blue-600': activeTab === 'diskusi', 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300': activeTab !== 'diskusi' }" class="whitespace-nowrap py-4 px-2 border-b-2 font-bold text-sm flex items-center gap-2 transition mr-6">
                         <i class="fa-solid fa-comments"></i> Diskusi & Catatan
+                    </button>
+                    <button @click="activeTab = 'berita-acara'" :class="{ 'border-blue-600 text-blue-600': activeTab === 'berita-acara', 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300': activeTab !== 'berita-acara' }" class="whitespace-nowrap py-4 px-2 border-b-2 font-bold text-sm flex items-center gap-2 transition">
+                        <i class="fa-solid fa-file-signature"></i> Tanda Tangan BA
                     </button>
                 </div>
 
@@ -431,6 +434,67 @@
                         </div>
                     </div>
 
+                    <!-- TAB 4: Berita Acara -->
+                    <div x-show="activeTab === 'berita-acara'" style="display: none;" x-transition.opacity>
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-6">
+                            <h3 class="font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+                                <i class="fa-solid fa-file-signature text-indigo-500"></i> Pengesahan Berita Acara
+                            </h3>
+                            @php
+                                $ba = $paket->beritaAcara->last();
+                            @endphp
+                            
+                            @if(!$ba)
+                                <div class="text-center py-8 text-slate-500">
+                                    <i class="fa-solid fa-file-excel text-3xl mb-2 text-slate-300"></i>
+                                    <p class="text-sm">Dokumen Berita Acara belum dibuat.</p>
+                                </div>
+                            @else
+                                <div class="mb-4">
+                                    <span class="font-bold text-sm">Status BA:</span> 
+                                    <span class="px-2 py-1 text-xs font-bold rounded-lg 
+                                        {{ $ba->status === 'selesai' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }}">
+                                        {{ str_replace('_', ' ', strtoupper($ba->status)) }}
+                                    </span>
+                                </div>
+                                
+                                <div class="flex gap-4">
+                                    @if(Auth::user()->jabatan_aktif === 'PP')
+                                        @if($ba->status === 'draft' && $paket->pp_id === Auth::id())
+                                            <button onclick="openSignModal('{{ route('berita-acara.sign', $ba) }}', 'Pejabat Pengadaan (PP)')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-750 text-white rounded-xl text-sm font-semibold transition cursor-pointer flex items-center gap-2">
+                                                <i class="fa-solid fa-file-signature"></i> Unggah Tanda Tangan PP
+                                            </button>
+                                        @else
+                                            <p class="text-sm text-slate-500">PP telah menandatangani dokumen, atau dokumen belum siap ditandatangani.</p>
+                                        @endif
+                                    @endif
+
+                                    @if(Auth::user()->jabatan_aktif === 'PPK')
+                                        @if($ba->status === 'tanda_tangan_pertama' && ($paket->ppk_id === null || $paket->ppk_id === Auth::id()))
+                                            @php
+                                                $canSign = true;
+                                                if ($paket->ppk_id === null) {
+                                                    $canSign = $paket->lampiran()->where('status_validasi', 'disetujui')->exists();
+                                                }
+                                            @endphp
+                                            @if($canSign)
+                                                <button onclick="openSignModal('{{ route('berita-acara.sign', $ba) }}', 'Pejabat Pembuat Komitmen (PPK)')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-750 text-white rounded-xl text-sm font-semibold transition cursor-pointer flex items-center gap-2">
+                                                    <i class="fa-solid fa-file-signature"></i> Unggah Tanda Tangan PPK
+                                                </button>
+                                            @else
+                                                <span class="text-sm text-rose-500 italic block">Butuh minimal 1 lampiran disetujui.</span>
+                                            @endif
+                                        @elseif($ba->status === 'selesai')
+                                            <p class="text-sm text-emerald-600 font-bold">Dokumen Berita Acara telah selesai ditandatangani oleh semua pihak.</p>
+                                        @else
+                                            <p class="text-sm text-slate-500">Menunggu PP menandatangani Berita Acara terlebih dahulu.</p>
+                                        @endif
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -539,4 +603,60 @@
 
         </div>
     </div>
+
+    <!-- Modal Form Sign -->
+    <div id="signModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-slate-900 bg-opacity-75 transition-opacity backdrop-blur-sm" aria-hidden="true" onclick="closeSignModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white dark:bg-slate-900 rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md w-full border border-slate-200 dark:border-slate-800">
+                <form id="signForm" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="p-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-bold text-slate-900 dark:text-white" id="modal-title">
+                                Pengesahan Berita Acara
+                            </h3>
+                            <button type="button" onclick="closeSignModal()" class="text-slate-400 hover:text-slate-500 focus:outline-none transition-colors">
+                                <i class="fa-solid fa-xmark text-xl"></i>
+                            </button>
+                        </div>
+                        <div class="mt-2 space-y-5">
+                            <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                                Anda akan mengesahkan Berita Acara ini sebagai <span id="signRoleName" class="font-bold text-slate-800 dark:text-white"></span>.
+                            </p>
+                            <div>
+                                <div class="p-4 bg-slate-50 dark:bg-slate-800/40 border border-indigo-100 dark:border-slate-800 rounded-2xl space-y-2">
+                                    <label class="block text-xs font-bold text-indigo-900 dark:text-indigo-400 uppercase">Unggah Gambar Tanda Tangan Anda (PNG/JPG)</label>
+                                    <input id="signature_image" type="file" name="signature_image" required accept="image/png, image/jpeg, image/jpg" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-slate-800 dark:file:text-white" />
+                                    <p class="text-[10px] text-slate-400">Silakan unggah pindaian tanda tangan basah Anda.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 px-8 py-5 sm:flex sm:flex-row-reverse rounded-b-3xl border-t border-slate-200 dark:border-slate-700/50">
+                        <button type="submit" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-2.5 bg-indigo-600 text-base font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm transition-all">
+                            Unggah & Sahkan
+                        </button>
+                        <button type="button" onclick="closeSignModal()" class="mt-3 w-full inline-flex justify-center rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm px-6 py-2.5 bg-white dark:bg-slate-800 text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-all">
+                            Batal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openSignModal(actionUrl, roleName) {
+            document.getElementById('signForm').action = actionUrl;
+            document.getElementById('signRoleName').textContent = roleName;
+            document.getElementById('signModal').classList.remove('hidden');
+        }
+
+        function closeSignModal() {
+            document.getElementById('signModal').classList.add('hidden');
+            document.getElementById('signForm').reset();
+        }
+    </script>
 </x-app-layout>

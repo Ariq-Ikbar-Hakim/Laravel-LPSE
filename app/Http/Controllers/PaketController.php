@@ -86,7 +86,7 @@ class PaketController extends Controller
             ]);
         }
 
-        $paket->load(['ppk', 'pp', 'lampiran.uploader', 'comments.user', 'comments.lampiran', 'logs.user']);
+        $paket->load(['ppk', 'pp', 'lampiran.uploader', 'comments.user', 'comments.lampiran', 'logs.user', 'beritaAcara.signatures.user']);
 
         return view('paket.show', compact('paket'));
     }

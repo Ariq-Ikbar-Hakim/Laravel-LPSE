@@ -65,21 +65,17 @@ class BeritaAcaraPolicy
             return false;
         }
 
-        // PPK tidak bisa tanda tangan sebelum PP menandatangani
-        if ($beritaAcara->status !== 'tanda_tangan_pertama' || !$beritaAcara->hasSignatureFrom('PP')) {
+        // Jika sudah ditandatangani PPK, jangan bisa tanda tangan lagi (biar tidak dobel)
+        if ($beritaAcara->hasSignatureFrom('PPK')) {
             return false;
         }
 
-        // Khusus jalur Manual (bypass PP, ppk_id === null): 
-        // PPK diblokir jika belum ada minimal satu lampiran dengan status validasi 'disetujui'
-        if ($paket->ppk_id === null) {
-            $hasApprovedLampiran = $paket->lampiran()->where('status_validasi', 'disetujui')->exists();
-            if (!$hasApprovedLampiran) {
-                return false;
-            }
+        // PPK tidak bisa tanda tangan sebelum PP menandatangani
+        // Tapi jika status sudah selesai atau tanda_tangan_pertama, boleh.
+        if ($beritaAcara->status !== 'tanda_tangan_pertama' && $beritaAcara->status !== 'selesai' && !$beritaAcara->hasSignatureFrom('PP')) {
+            return false;
         }
 
-        // Dan PPK belum menandatangani
-        return !$beritaAcara->hasSignatureFrom('PPK');
+        return true;
     }
 }
