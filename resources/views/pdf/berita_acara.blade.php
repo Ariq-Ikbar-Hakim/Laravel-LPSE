@@ -45,36 +45,66 @@
         .data-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
         .data-table th, .data-table td { border: 1px solid #000; padding: 6px 10px; vertical-align: top; }
         .data-table th, .data-table .col-label { width: 35%; font-weight: bold; }
-        
-        /* Signatures */
-        .signatures { width: 100%; margin-top: 40px; text-align: center; }
-        .sig-box { width: 50%; float: left; }
+
+        /* ============================================
+           SIGNATURES — FIXED (v2)
+           Percobaan sebelumnya pakai display:inline-block
+           + page-break-inside:avoid TERNYATA membuat dompdf
+           memecah SETIAP elemen kecil (judul, QR, nama, NIP)
+           ke halamannya masing-masing — bug dompdf yang
+           dikenal luas saat inline-block dikombinasikan
+           dengan page-break-inside:avoid.
+           Solusi paling stabil di dompdf: kembali ke <table>
+           polos (bukan div/float/inline-block). Dompdf jauh
+           lebih matang menangani table dibanding layout CSS
+           modern.
+           ============================================ */
+        .signatures-table {
+            width: 100%;
+            margin-top: 40px;
+            border-collapse: collapse;
+        }
+        .signatures-table td {
+            width: 33.33%;
+            border: none;
+            text-align: center;
+            vertical-align: top;
+            padding: 0 5px;
+        }
+
         .sig-title { font-weight: bold; margin-bottom: 15px; }
-        .qr-code { width: 100px; margin: 0 auto; text-align: center; }
+        .qr-code { width: 100px; margin: 0 auto 10px auto; text-align: center; }
+        .qr-code img,
+        .qr-code .qr-placeholder { width: 100px; height: 100px; }
+        .qr-placeholder {
+            border: 1px dashed #ccc;
+            line-height: 100px;
+            margin: 0 auto;
+            font-size: 8pt;
+            color: #999;
+        }
         .sig-name { font-weight: bold; text-decoration: underline; margin-top: 5px; }
         .sig-nip { margin-top: 2px; }
-        
-        .clearfix { clear: both; }
 
-        /* Verification Box */
-        .verification-box { 
-            border: 1px solid #ccc; 
-            background-color: #f9f9f9; 
-            padding: 15px; 
-            text-align: center; 
-            margin-top: 40px;
+        /* Verifikasi (Tengah) */
+        .verifikasi-title { font-weight: bold; color: #1b365d; margin-bottom: 15px; font-size: 9pt; }
+        .verifikasi-desc { font-size: 8pt; font-style: italic; color: #555; margin-top: 10px; word-wrap: break-word; word-break: break-all; line-height: 1.2; }
+        
+        .footer-note {
+            font-size: 9pt;
+            font-style: italic;
+            color: #777;
+            text-align: center;
+            margin-top: 15px;
             page-break-inside: avoid;
         }
-        .verification-box-title { font-weight: bold; color: #1b365d; margin-bottom: 15px; }
-        .verification-qr { width: 80px; margin: 0 auto; }
-        .verification-desc { font-size: 9pt; font-style: italic; color: #555; margin-top: 15px; word-wrap: break-word; word-break: break-all; }
-        
-        .footer-note { font-size: 9pt; font-style: italic; color: #777; text-align: center; margin-top: 15px; }
         
         /* Footer pagination */
         .footer-page { position: fixed; bottom: -30px; left: 0px; right: 0px; font-size: 8pt; color: #777; }
         .footer-page .left { float: left; }
         .footer-page .right { float: right; }
+        /* counter(pages) TIDAK didukung dompdf secara default (hasilnya "dari 0"),
+           jadi kita cukup pakai nomor halaman saja tanpa total halaman. */
         .page-number:after { content: counter(page); }
     </style>
 </head>
@@ -146,71 +176,97 @@
     <div class="section-title text-blue">IV. PENUTUP</div>
     <p>Demikian Berita Acara Persetujuan Paket ini dibuat dengan sebenar-benarnya dalam rangkap secukupnya, untuk dapat dipergunakan sebagaimana mestinya dan ditandatangani secara elektronik menggunakan QR Code oleh para pihak yang berwenang.</p>
 
-    <!-- Signatures -->
-    <table style="width: 100%; margin-top: 40px; text-align: center; border-collapse: collapse; border: none;">
+    {{--
+        SIGNATURES (fixed v2)
+        Table sederhana 1 baris 2 kolom. TIDAK pakai div
+        inline-block/float lagi karena terbukti membuat
+        dompdf memecah tiap elemen ke halaman sendiri-sendiri.
+        style="page-break-inside:avoid" ditulis inline juga
+        (bukan cuma di class) karena dompdf kadang lebih
+        konsisten membaca inline style pada elemen table.
+    --}}
+    <table class="signatures-table" style="page-break-inside: avoid;">
         <tr>
-            <!-- Pejabat Pengadaan (PP) -->
-            <td style="width: 50%; border: none; vertical-align: top;">
+            {{-- Pejabat Pengadaan (PP) --}}
+            <td>
                 <div class="sig-title">Pejabat Pengadaan (PP)</div>
-                <div class="qr-code" style="margin-bottom: 10px;">
+                <div class="qr-code">
                     @if($beritaAcara->hasSignatureFrom('PP'))
                         @php
                             $ppUrl = asset('storage/' . $beritaAcara->ppSignature()->signature_image);
-                            $qrImage = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->merge(public_path('assets/logo-dpmd-bangkalan.png'), 0.3, true)->size(100)->errorCorrection('H')->generate($ppUrl));
+                            $qrImagePP = base64_encode(
+                                \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                                    ->merge(public_path('assets/logo-dpmd-bangkalan.png'), 0.3, true)
+                                    ->size(100)
+                                    ->errorCorrection('H')
+                                    ->generate($ppUrl)
+                            );
                         @endphp
-                        <img src="data:image/png;base64,{!! $qrImage !!}" style="width: 100px; height: 100px;" />
+                        <img src="data:image/png;base64,{!! $qrImagePP !!}" alt="QR PP">
                     @else
-                        <div style="width: 100px; height: 100px; border: 1px dashed #ccc; line-height: 100px; margin: 0 auto; font-size: 8pt; color: #999;">[ QR CODE VERIFIKASI ]</div>
+                        <div class="qr-placeholder">[ QR CODE VERIFIKASI ]</div>
                     @endif
                 </div>
                 @if($beritaAcara->hasSignatureFrom('PP'))
                     <div class="sig-name">{{ $beritaAcara->ppSignature()->user->nama }}</div>
                     <div class="sig-nip">NIP. {{ $beritaAcara->ppSignature()->user->nip }}</div>
                 @else
-                    <div class="sig-name" style="color: #999; text-decoration: underline;">{{ $paket->pejabatPengadaan->nama ?? '.........................................' }}</div>
+                    <div class="sig-name" style="color: #999;">{{ $paket->pejabatPengadaan->nama ?? '.........................................' }}</div>
                     <div class="sig-nip" style="color: #999;">NIP. {{ $paket->pejabatPengadaan->nip ?? '.........................' }}</div>
                 @endif
             </td>
 
-            <!-- Pejabat Pembuat Komitmen (PPK) -->
-            <td style="width: 50%; border: none; vertical-align: top;">
-                <div class="sig-title">Pejabat Pembuat Komitmen (PPK)</div>
-                <div class="qr-code" style="margin-bottom: 10px;">
+            {{-- Verifikasi Dokumen (Tengah) --}}
+            <td>
+                <div class="verifikasi-title">Verifikasi Dokumen</div>
+                <div class="qr-code">
+                    @php
+                        $veriUrl = route('verify', $beritaAcara->verification_hash);
+                        $qrImageVeri = base64_encode(
+                            \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                                ->merge(public_path('assets/logo-dpmd-bangkalan.png'), 0.3, true)
+                                ->size(100)
+                                ->errorCorrection('H')
+                                ->generate($veriUrl)
+                        );
+                    @endphp
+                    <img src="data:image/png;base64,{!! $qrImageVeri !!}" alt="QR Verifikasi">
+                </div>
+                <div class="verifikasi-desc">
+                    Scan QR untuk cek<br>keaslian dokumen
+                </div>
+            </td>
+
+            {{-- Pejabat Pembuat Komitmen (PPK) --}}
+            <td>
+                <div class="sig-title">Pejabat Pembuat Komitmen<br>(PPK)</div>
+                <div class="qr-code">
                     @if($beritaAcara->hasSignatureFrom('PPK'))
                         @php
                             $ppkUrl = asset('storage/' . $beritaAcara->ppkSignature()->signature_image);
-                            $qrImage2 = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->merge(public_path('assets/logo-dpmd-bangkalan.png'), 0.3, true)->size(100)->errorCorrection('H')->generate($ppkUrl));
+                            $qrImagePPK = base64_encode(
+                                \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                                    ->merge(public_path('assets/logo-dpmd-bangkalan.png'), 0.3, true)
+                                    ->size(100)
+                                    ->errorCorrection('H')
+                                    ->generate($ppkUrl)
+                            );
                         @endphp
-                        <img src="data:image/png;base64,{!! $qrImage2 !!}" style="width: 100px; height: 100px;" />
+                        <img src="data:image/png;base64,{!! $qrImagePPK !!}" alt="QR PPK">
                     @else
-                        <div style="width: 100px; height: 100px; border: 1px dashed #ccc; line-height: 100px; margin: 0 auto; font-size: 8pt; color: #999;">[ QR CODE VERIFIKASI ]</div>
+                        <div class="qr-placeholder">[ QR CODE VERIFIKASI ]</div>
                     @endif
                 </div>
                 @if($beritaAcara->hasSignatureFrom('PPK'))
                     <div class="sig-name">{{ $beritaAcara->ppkSignature()->user->nama }}</div>
                     <div class="sig-nip">NIP. {{ $beritaAcara->ppkSignature()->user->nip }}</div>
                 @else
-                    <div class="sig-name" style="color: #999; text-decoration: underline;">{{ $paket->pejabatPembuatKomitmen->nama ?? '.........................................' }}</div>
+                    <div class="sig-name" style="color: #999;">{{ $paket->pejabatPembuatKomitmen->nama ?? '.........................................' }}</div>
                     <div class="sig-nip" style="color: #999;">NIP. {{ $paket->pejabatPembuatKomitmen->nip ?? '.........................' }}</div>
                 @endif
             </td>
         </tr>
     </table>
-
-    <!-- Verification Box -->
-    <div class="verification-box">
-        <div class="verification-box-title">Verifikasi Dokumen</div>
-        <div class="verification-qr" style="margin-bottom: 10px;">
-            @php
-                $veriUrl = route('verify', $beritaAcara->verification_hash);
-                $qrImage3 = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->merge(public_path('assets/logo-dpmd-bangkalan.png'), 0.3, true)->size(80)->errorCorrection('H')->generate($veriUrl));
-            @endphp
-            <img src="data:image/png;base64,{!! $qrImage3 !!}" style="width: 80px; height: 80px;" />
-        </div>
-        <div class="verification-desc">
-            Pindai kode QR ini untuk memverifikasi keaslian dokumen pada sistem: {{ route('verify', $beritaAcara->verification_hash) }}
-        </div>
-    </div>
 
     <div class="footer-note">
         Dokumen ini sah dan dapat diverifikasi melalui QR Code / tautan verifikasi pada sistem.<br>

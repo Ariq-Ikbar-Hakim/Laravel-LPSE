@@ -292,7 +292,7 @@
                                                     <div class="flex items-start gap-2">
                                                         <i class="fa-solid fa-file-word text-blue-500 mt-1"></i>
                                                         <div>
-                                                            <a href="{{ Storage::url($lampiran->file_path) }}" class="text-blue-600 dark:text-blue-400 font-medium text-sm hover:underline">{{ $lampiran->nama_file }}</a>
+                                                            <a href="{{ Storage::url($lampiran->file_path) }}" class="text-blue-600 dark:text-blue-400 font-medium text-sm hover:underline break-all">{{ $lampiran->nama_file }}</a>
                                                             <div class="flex items-center gap-2 mt-1">
                                                                 <span class="{{ $labelClass }} px-1.5 py-0.5 rounded text-[10px] font-bold">{{ strtoupper($versionLabel) }}</span>
                                                                 <span class="text-[11px] text-slate-500">&bull; Oleh: {{ $lampiran->uploader->nama ?? 'Sistem' }}</span>
@@ -333,8 +333,8 @@
                         </div>
 
                         <!-- Upload Modal (Hidden by default or shown if error) -->
-                        <div id="upload-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 {{ $errors->has('file_dokumen') || $errors->has('tipe_dokumen') ? '' : 'hidden' }}">
-                            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+                        <div id="upload-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 {{ $errors->has('file_dokumen') || $errors->has('tipe_dokumen') ? '' : 'hidden' }}">
+                            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden"style="max-width: 400px;">
                                 <div class="p-4 border-b border-slate-100 flex justify-between items-center">
                                     <h3 class="font-bold">Upload Lampiran Baru</h3>
                                     <button onclick="document.getElementById('upload-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
@@ -367,7 +367,9 @@
                                         }
                                     }">
                                         <label class="block text-xs font-bold text-slate-700 mb-1">Pilih File</label>
-                                        <input type="file" name="file_dokumen" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.txt,.csv,.rtf" @change="checkFileSize($event)" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
+                                        <div class="w-full overflow-hidden">
+                                            <input type="file" name="file_dokumen" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.txt,.csv,.rtf" @change="checkFileSize($event)" class="w-full block text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 truncate" required>
+                                        </div>
                                         <p x-show="!fileError" class="mt-1 text-[10px] text-slate-500"><i class="fa-solid fa-circle-info mr-1"></i> Hanya dokumen (PDF, Word, Excel, PPT, dll). Maks. 3 MB.</p>
                                         <p x-show="fileError" style="display: none;" class="mt-1 text-[10px] text-rose-600 font-bold">
                                             <i class="fa-solid fa-circle-exclamation mr-1"></i> <span x-text="fileError"></span>
@@ -485,7 +487,20 @@
                                                 <span class="text-sm text-rose-500 italic block">Butuh minimal 1 lampiran disetujui.</span>
                                             @endif
                                         @elseif($ba->status === 'selesai')
-                                            <p class="text-sm text-emerald-600 font-bold">Dokumen Berita Acara telah selesai ditandatangani oleh semua pihak.</p>
+                                            <div class="flex flex-col gap-3 w-full">
+                                                <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl flex items-start gap-3">
+                                                    <i class="fa-solid fa-circle-check mt-1 text-emerald-600"></i>
+                                                    <div>
+                                                        <h4 class="font-bold text-sm">Dokumen Selesai</h4>
+                                                        <p class="text-xs">Berita Acara telah selesai ditandatangani secara digital oleh semua pihak.</p>
+                                                    </div>
+                                                </div>
+                                                @if($ba->file_laporan)
+                                                <a href="{{ Storage::url($ba->file_laporan) }}" target="_blank" class="w-fit bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-xl text-sm transition shadow-sm flex items-center gap-2">
+                                                    <i class="fa-solid fa-file-pdf"></i> Lihat / Unduh Dokumen PDF Final
+                                                </a>
+                                                @endif
+                                            </div>
                                         @else
                                             <p class="text-sm text-slate-500">Menunggu PP menandatangani Berita Acara terlebih dahulu.</p>
                                         @endif
@@ -605,12 +620,10 @@
     </div>
 
     <!-- Modal Form Sign -->
-    <div id="signModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-slate-900 bg-opacity-75 transition-opacity backdrop-blur-sm" aria-hidden="true" onclick="closeSignModal()"></div>
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white dark:bg-slate-900 rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md w-full border border-slate-200 dark:border-slate-800">
-                <form id="signForm" method="POST" enctype="multipart/form-data">
+    <div id="signModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-black/50 transition-opacity" aria-hidden="true" onclick="closeSignModal()"></div>
+        <div class="relative bg-white dark:bg-slate-900 rounded-3xl text-left overflow-hidden shadow-2xl w-full max-w-md border border-slate-200 dark:border-slate-800"style="max-width: 400px;">
+            <form id="signForm" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="p-8">
                         <div class="flex items-center justify-between mb-6">
@@ -634,12 +647,12 @@
                             </div>
                         </div>
                     </div>
-                    <div class="bg-slate-50 dark:bg-slate-800/50 px-8 py-5 sm:flex sm:flex-row-reverse rounded-b-3xl border-t border-slate-200 dark:border-slate-700/50">
-                        <button type="submit" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-2.5 bg-indigo-600 text-base font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm transition-all">
-                            Unggah & Sahkan
-                        </button>
-                        <button type="button" onclick="closeSignModal()" class="mt-3 w-full inline-flex justify-center rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm px-6 py-2.5 bg-white dark:bg-slate-800 text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-all">
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-6 flex justify-end rounded-b-3xl border-t border-slate-200 dark:border-slate-700/50">
+                        <button type="button" onclick="closeSignModal()" class="inline-flex justify-center rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm px-6 py-2.5 bg-white dark:bg-slate-800 text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 mr-4 transition-all">
                             Batal
+                        </button>
+                        <button type="submit" class="inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-2.5 bg-indigo-600 text-base font-semibold text-white hover:bg-indigo-700 transition-all">
+                            Unggah & Sahkan
                         </button>
                     </div>
                 </form>
