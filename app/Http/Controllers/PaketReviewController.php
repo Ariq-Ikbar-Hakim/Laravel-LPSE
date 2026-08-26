@@ -227,17 +227,13 @@ class PaketReviewController extends Controller
             $paket = $beritaAcara->paket;
             $signatures = $beritaAcara->signatures;
             
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.berita_acara', [
+            // Generate PDF using PdfService abstraction (engine configurable)
+            $pdfContent = \App\Services\PdfService::generate('pdf.berita_acara', [
                 'beritaAcara' => $beritaAcara,
                 'paket' => $paket,
-                'signatures' => $signatures
-            ])->setPaper('a4', 'portrait');
-
-            $pdfContent = $pdf->output();
-
-            $pdfName = 'BA_Paket_' . $paket->id . '_' . time() . '.pdf';
-            $pdfPath = 'berita-acara/' . $pdfName;
-            
+                'signatures' => $signatures,
+            ]);
+            // Store the generated PDF
             \Illuminate\Support\Facades\Storage::disk('public')->put($pdfPath, $pdfContent);
 
             // 3. Hitung SHA-256 dan simpan di signatures

@@ -65,11 +65,11 @@
             border-collapse: collapse;
         }
         .signatures-table td {
-            width: 33.33%;
+            width: 50%;
             border: none;
             text-align: center;
             vertical-align: top;
-            padding: 0 5px;
+            padding: 0 10px;
         }
 
         .sig-title { font-weight: bold; margin-bottom: 15px; }
@@ -86,9 +86,19 @@
         .sig-name { font-weight: bold; text-decoration: underline; margin-top: 5px; }
         .sig-nip { margin-top: 2px; }
 
-        /* Verifikasi (Tengah) */
-        .verifikasi-title { font-weight: bold; color: #1b365d; margin-bottom: 15px; font-size: 9pt; }
-        .verifikasi-desc { font-size: 8pt; font-style: italic; color: #555; margin-top: 10px; word-wrap: break-word; word-break: break-all; line-height: 1.2; }
+        /* Verification Box */
+        .verification-box { 
+            border: 1px solid #ccc; 
+            background-color: #f9f9f9; 
+            padding: 15px; 
+            text-align: center; 
+            margin-top: 30px;
+            page-break-inside: avoid;
+        }
+        .verification-title { font-weight: bold; color: #1b365d; margin-bottom: 15px; }
+        .verification-qr { margin: 0 auto 10px auto; }
+        .verification-qr img { width: 80px; height: 80px; }
+        .verification-desc { font-size: 9pt; font-style: italic; color: #555; }
         
         .footer-note {
             font-size: 9pt;
@@ -216,30 +226,9 @@
                 @endif
             </td>
 
-            {{-- Verifikasi Dokumen (Tengah) --}}
-            <td>
-                <div class="verifikasi-title">Verifikasi Dokumen</div>
-                <div class="qr-code">
-                    @php
-                        $veriUrl = route('verify', $beritaAcara->verification_hash);
-                        $qrImageVeri = base64_encode(
-                            \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-                                ->merge(public_path('assets/logo-dpmd-bangkalan.png'), 0.3, true)
-                                ->size(100)
-                                ->errorCorrection('H')
-                                ->generate($veriUrl)
-                        );
-                    @endphp
-                    <img src="data:image/png;base64,{!! $qrImageVeri !!}" alt="QR Verifikasi">
-                </div>
-                <div class="verifikasi-desc">
-                    Scan QR untuk cek<br>keaslian dokumen
-                </div>
-            </td>
-
             {{-- Pejabat Pembuat Komitmen (PPK) --}}
             <td>
-                <div class="sig-title">Pejabat Pembuat Komitmen<br>(PPK)</div>
+                <div class="sig-title">Pejabat Pembuat Komitmen (PPK)</div>
                 <div class="qr-code">
                     @if($beritaAcara->hasSignatureFrom('PPK'))
                         @php
@@ -267,6 +256,27 @@
             </td>
         </tr>
     </table>
+
+    <!-- Verification Box -->
+    <div class="verification-box">
+        <div class="verification-title">Verifikasi Dokumen</div>
+        <div class="verification-qr">
+            @php
+                $veriUrl = route('verify', $beritaAcara->verification_hash);
+                $qrImageVeri = base64_encode(
+                    \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                        ->merge(public_path('assets/logo-dpmd-bangkalan.png'), 0.3, true)
+                        ->size(80)
+                        ->errorCorrection('H')
+                        ->generate($veriUrl)
+                );
+            @endphp
+            <img src="data:image/png;base64,{!! $qrImageVeri !!}" alt="QR Verifikasi">
+        </div>
+        <div class="verification-desc">
+            Pindai kode QR ini untuk memverifikasi keaslian dokumen pada sistem: {{ $veriUrl }}
+        </div>
+    </div>
 
     <div class="footer-note">
         Dokumen ini sah dan dapat diverifikasi melalui QR Code / tautan verifikasi pada sistem.<br>
