@@ -5,8 +5,7 @@
     <title>Berita Acara Persetujuan Paket</title>
     <style>
         @page {
-            margin: 2cm;
-            margin-bottom: 3cm;
+            margin: 2.5cm 2cm 3cm 2cm; /* Top, Right, Bottom, Left */
         }
         body { 
             font-family: "Times New Roman", Times, serif; 
@@ -45,20 +44,9 @@
         .data-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
         .data-table th, .data-table td { border: 1px solid #000; padding: 6px 10px; vertical-align: top; }
         .data-table th, .data-table .col-label { width: 35%; font-weight: bold; }
+        /* Mencegah row tabel terpotong di tengah yang menyebabkan teks naik ke margin atas di halaman berikutnya */
+        .data-table tr { page-break-inside: avoid; }
 
-        /* ============================================
-           SIGNATURES — FIXED (v2)
-           Percobaan sebelumnya pakai display:inline-block
-           + page-break-inside:avoid TERNYATA membuat dompdf
-           memecah SETIAP elemen kecil (judul, QR, nama, NIP)
-           ke halamannya masing-masing — bug dompdf yang
-           dikenal luas saat inline-block dikombinasikan
-           dengan page-break-inside:avoid.
-           Solusi paling stabil di dompdf: kembali ke <table>
-           polos (bukan div/float/inline-block). Dompdf jauh
-           lebih matang menangani table dibanding layout CSS
-           modern.
-           ============================================ */
         .signatures-table {
             width: 100%;
             margin-top: 40px;
@@ -109,179 +97,216 @@
             page-break-inside: avoid;
         }
         
-        /* Footer pagination */
-        .footer-page { position: fixed; bottom: -30px; left: 0px; right: 0px; font-size: 8pt; color: #777; }
-        .footer-page .left { float: left; }
-        .footer-page .right { float: right; }
-        /* counter(pages) TIDAK didukung dompdf secara default (hasilnya "dari 0"),
-           jadi kita cukup pakai nomor halaman saja tanpa total halaman. */
-        .page-number:after { content: counter(page); }
+        /* Footer pagination menggunakan tag footer standar */
+        footer {
+            position: fixed;
+            bottom: -2cm; /* Berada di dalam margin bawah (3cm) */
+            left: 0px;
+            right: 0px;
+            height: 1.5cm;
+            font-size: 8pt;
+            color: #777;
+        }
+        footer .left { float: left; }
+        footer .right { float: right; text-align: right; }
+        .page-number:before { content: counter(page); }
     </style>
 </head>
 <body>
-    <!-- Pagination Footer -->
-    <div class="footer-page">
+    <!-- Footer diletakkan di paling atas body untuk DOMPDF -->
+    <footer>
         <div class="left">Dokumen ini dihasilkan otomatis oleh Sistem Pengadaan Barang/Jasa</div>
         <div class="right">Halaman <span class="page-number"></span></div>
-    </div>
+    </footer>
 
-    <!-- Header -->
-    <table class="header-table">
-        <tr>
-            <td class="header-logo">
-                <img src="{{ public_path('assets/logo-dpmd-bangkalan.png') }}" alt="Logo">
-            </td>
-            <td class="header-text text-blue">
-                <div class="header-title-1">PEMERINTAH KABUPATEN BANGKALAN</div>
-                <div class="header-title-2">DINAS PEMBERDAYAAN MASYARAKAT DAN DESA</div>
-                <div class="header-address">Jl. Halim Perdana Kusuma No. 2, Bangkalan, Kode Pos 69116 | Telp: (031) 3095018 | Email: dpmd@bangkalankab.go.id</div>
-            </td>
-        </tr>
-    </table>
-    <div class="header-line"></div>
+    <!-- Main content dibungkus tag main -->
+    <main>
+        <!-- Header -->
+        <table class="header-table">
+            <tr>
+                <td class="header-logo">
+                    <img src="{{ public_path('assets/logo-dpmd-bangkalan.png') }}" alt="Logo">
+                </td>
+                <td class="header-text text-blue">
+                    <div class="header-title-1">PEMERINTAH KABUPATEN BANGKALAN</div>
+                    <div class="header-title-2">DINAS PEMBERDAYAAN MASYARAKAT DAN DESA</div>
+                    <div class="header-address">Jl. Halim Perdana Kusuma No. 2, Bangkalan, Kode Pos 69116 | Telp: (031) 3095018 | Email: dpmd@bangkalankab.go.id</div>
+                </td>
+            </tr>
+        </table>
+        <div class="header-line"></div>
 
-    <!-- Document Title -->
-    <div class="doc-title text-blue">
-        <h1>BERITA ACARA PERSETUJUAN PAKET</h1>
-        <p style="color: #000;">Nomor: {{ $beritaAcara->nomor_ba ?? 'BA/' . date('Y/m/d') . '/' . $beritaAcara->id }}</p>
-    </div>
-
-    <!-- Intro -->
-    <p>Berdasarkan Peraturan Presiden Nomor 16 Tahun 2018 tentang Pengadaan Barang/Jasa Pemerintah beserta perubahan dan aturan turunannya, serta memperhatikan hasil kajian dan persiapan pengadaan yang telah dilaksanakan, dengan ini disampaikan hal-hal sebagai berikut:</p>
-
-    <!-- Section I -->
-    <div class="section-title text-blue">I. DASAR</div>
-    <p>Pada hari ini, tanggal <strong>{{ \Carbon\Carbon::parse($beritaAcara->tanggal_ba ?? now())->translatedFormat('d F Y') }}</strong>, Pejabat Pengadaan (PP) dan Pejabat Pembuat Komitmen (PPK) telah melaksanakan reviu dan menyetujui dokumen persiapan pengadaan paket sebagaimana rincian pada bagian II di bawah ini, sebagai kelanjutan dari proses persiapan pengadaan yang tercantum dalam Rencana Umum Pengadaan (RUP).</p>
-
-    <!-- Section II -->
-    <div class="section-title text-blue">II. URAIAN PAKET PENGADAAN</div>
-    <table class="data-table">
-        <tr>
-            <td class="col-label text-blue" style="background-color: #f0f4f8;">Nama Paket</td>
-            <td>{{ $paket->nama_paket }}</td>
-        </tr>
-        <tr>
-            <td class="col-label text-blue" style="background-color: #f0f4f8;">Kode RUP</td>
-            <td>{{ $paket->kode_rup }}</td>
-        </tr>
-        <tr>
-            <td class="col-label text-blue" style="background-color: #f0f4f8;">Tahun Anggaran</td>
-            <td>{{ $paket->tahun_anggaran ?? date('Y') }}</td>
-        </tr>
-        <tr>
-            <td class="col-label text-blue" style="background-color: #f0f4f8;">Pagu</td>
-            <td>Rp {{ number_format($paket->pagu, 0, ',', '.') }}</td>
-        </tr>
-        <tr>
-            <td class="col-label text-blue" style="background-color: #f0f4f8;">HPS</td>
-            <td>Rp {{ number_format($paket->hps ?? 0, 0, ',', '.') }}</td>
-        </tr>
-    </table>
-
-    <!-- Section III -->
-    <div class="section-title text-blue">III. KESIMPULAN</div>
-    <p>Berdasarkan uraian tersebut di atas, dokumen persiapan pengadaan paket <strong>{{ $paket->nama_paket }}</strong> dinyatakan LENGKAP dan telah memenuhi ketentuan untuk dilanjutkan ke tahap proses pengadaan berikutnya sesuai dengan peraturan perundang-undangan yang berlaku.</p>
-
-    <!-- Section IV -->
-    <div class="section-title text-blue">IV. PENUTUP</div>
-    <p>Demikian Berita Acara Persetujuan Paket ini dibuat dengan sebenar-benarnya dalam rangkap secukupnya, untuk dapat dipergunakan sebagaimana mestinya dan ditandatangani secara elektronik menggunakan QR Code oleh para pihak yang berwenang.</p>
-
-    {{--
-        SIGNATURES (fixed v2)
-        Table sederhana 1 baris 2 kolom. TIDAK pakai div
-        inline-block/float lagi karena terbukti membuat
-        dompdf memecah tiap elemen ke halaman sendiri-sendiri.
-        style="page-break-inside:avoid" ditulis inline juga
-        (bukan cuma di class) karena dompdf kadang lebih
-        konsisten membaca inline style pada elemen table.
-    --}}
-    <table class="signatures-table" style="page-break-inside: avoid;">
-        <tr>
-            {{-- Pejabat Pengadaan (PP) --}}
-            <td>
-                <div class="sig-title">Pejabat Pengadaan (PP)</div>
-                <div class="qr-code">
-                    @if($beritaAcara->hasSignatureFrom('PP'))
-                        @php
-                            $ppUrl = asset('storage/' . $beritaAcara->ppSignature()->signature_image);
-                            $qrImagePP = base64_encode(
-                                \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-                                    ->merge(public_path('assets/logo-dpmd-bangkalan.png'), 0.3, true)
-                                    ->size(100)
-                                    ->errorCorrection('H')
-                                    ->generate($ppUrl)
-                            );
-                        @endphp
-                        <img src="data:image/png;base64,{!! $qrImagePP !!}" alt="QR PP">
-                    @else
-                        <div class="qr-placeholder">[ QR CODE VERIFIKASI ]</div>
-                    @endif
-                </div>
-                @if($beritaAcara->hasSignatureFrom('PP'))
-                    <div class="sig-name">{{ $beritaAcara->ppSignature()->user->nama }}</div>
-                    <div class="sig-nip">NIP. {{ $beritaAcara->ppSignature()->user->nip }}</div>
-                @else
-                    <div class="sig-name" style="color: #999;">{{ $paket->pejabatPengadaan->nama ?? '.........................................' }}</div>
-                    <div class="sig-nip" style="color: #999;">NIP. {{ $paket->pejabatPengadaan->nip ?? '.........................' }}</div>
-                @endif
-            </td>
-
-            {{-- Pejabat Pembuat Komitmen (PPK) --}}
-            <td>
-                <div class="sig-title">Pejabat Pembuat Komitmen (PPK)</div>
-                <div class="qr-code">
-                    @if($beritaAcara->hasSignatureFrom('PPK'))
-                        @php
-                            $ppkUrl = asset('storage/' . $beritaAcara->ppkSignature()->signature_image);
-                            $qrImagePPK = base64_encode(
-                                \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-                                    ->merge(public_path('assets/logo-dpmd-bangkalan.png'), 0.3, true)
-                                    ->size(100)
-                                    ->errorCorrection('H')
-                                    ->generate($ppkUrl)
-                            );
-                        @endphp
-                        <img src="data:image/png;base64,{!! $qrImagePPK !!}" alt="QR PPK">
-                    @else
-                        <div class="qr-placeholder">[ QR CODE VERIFIKASI ]</div>
-                    @endif
-                </div>
-                @if($beritaAcara->hasSignatureFrom('PPK'))
-                    <div class="sig-name">{{ $beritaAcara->ppkSignature()->user->nama }}</div>
-                    <div class="sig-nip">NIP. {{ $beritaAcara->ppkSignature()->user->nip }}</div>
-                @else
-                    <div class="sig-name" style="color: #999;">{{ $paket->pejabatPembuatKomitmen->nama ?? '.........................................' }}</div>
-                    <div class="sig-nip" style="color: #999;">NIP. {{ $paket->pejabatPembuatKomitmen->nip ?? '.........................' }}</div>
-                @endif
-            </td>
-        </tr>
-    </table>
-
-    <!-- Verification Box -->
-    <div class="verification-box">
-        <div class="verification-title">Verifikasi Dokumen</div>
-        <div class="verification-qr">
-            @php
-                $veriUrl = route('verify', $beritaAcara->verification_hash);
-                $qrImageVeri = base64_encode(
-                    \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-                        ->merge(public_path('assets/logo-dpmd-bangkalan.png'), 0.3, true)
-                        ->size(80)
-                        ->errorCorrection('H')
-                        ->generate($veriUrl)
-                );
-            @endphp
-            <img src="data:image/png;base64,{!! $qrImageVeri !!}" alt="QR Verifikasi">
+        <!-- Document Title -->
+        <div class="doc-title text-blue">
+            <h1>BERITA ACARA PERSETUJUAN PAKET</h1>
+            <p style="color: #000;">Nomor: {{ $beritaAcara->nomor_ba ?? 'BA/' . date('Y/m/d') . '/' . ($beritaAcara->id ?? '') }}</p>
         </div>
-        <div class="verification-desc">
-            Pindai kode QR ini untuk memverifikasi keaslian dokumen pada sistem: {{ $veriUrl }}
+
+        <!-- Intro -->
+        <p>Berdasarkan Peraturan Presiden Nomor 16 Tahun 2018 tentang Pengadaan Barang/Jasa Pemerintah beserta perubahan dan aturan turunannya, serta memperhatikan hasil kajian dan persiapan pengadaan yang telah dilaksanakan, dengan ini disampaikan hal-hal sebagai berikut:</p>
+
+        <!-- Section I -->
+        <div class="section-title text-blue">I. DASAR</div>
+        <p>Pada hari ini, tanggal <strong>{{ \Carbon\Carbon::parse($beritaAcara->tanggal_ba ?? now())->translatedFormat('d F Y') }}</strong>, Pejabat Pengadaan (PP) dan Pejabat Pembuat Komitmen (PPK) telah melaksanakan reviu dan menyetujui dokumen persiapan pengadaan paket sebagaimana rincian pada bagian II di bawah ini, sebagai kelanjutan dari proses persiapan pengadaan yang tercantum dalam Rencana Umum Pengadaan (RUP).</p>
+
+        @php
+            $ketTambahan = json_decode($paket->keterangan_tambahan, true) ?? [];
+            $spesifikasi = $ketTambahan['spesifikasi_teknis'] ?? '-';
+            $uraian = $ketTambahan['uraian_pekerjaan'] ?? '-';
+            $waktuPenggunaan = $ketTambahan['waktu_penggunaan'] ?? '-';
+            $jadwal = $ketTambahan['jadwal_pelaksanaan'] ?? '-';
+        @endphp
+
+        <!-- Section II -->
+        <div class="section-title text-blue">II. URAIAN PAKET PENGADAAN</div>
+        <table class="data-table">
+            <tr>
+                <td class="col-label text-blue" style="background-color: #f0f4f8;">Nama Paket</td>
+                <td>{{ $paket->nama_paket }}</td>
+            </tr>
+            <tr>
+                <td class="col-label text-blue" style="background-color: #f0f4f8;">Kode RUP</td>
+                <td>{{ $paket->kode_rup }}</td>
+            </tr>
+            <tr>
+                <td class="col-label text-blue" style="background-color: #f0f4f8;">Tahun Anggaran</td>
+                <td>{{ $paket->tahun_anggaran ?? date('Y') }}</td>
+            </tr>
+            <tr>
+                <td class="col-label text-blue" style="background-color: #f0f4f8;">Pagu</td>
+                <td>Rp {{ number_format($paket->pagu, 0, ',', '.') }}</td>
+            </tr>
+        </table>
+
+        <!-- Section III -->
+        <div class="section-title text-blue">III. HASIL REVIU DOKUMEN PERSIAPAN PENGADAAN</div>
+        <table class="data-table">
+            <tr>
+                <td class="col-label text-blue" style="background-color: #f0f4f8;">1. Spesifikasi Teknis/KAK</td>
+                <td>Sesuai. Uraian: {{ $uraian }}, Spesifikasi: {{ $spesifikasi }}</td>
+            </tr>
+            <tr>
+                <td class="col-label text-blue" style="background-color: #f0f4f8;">2. Review HPS</td>
+                <td>Dikecualikan / Tidak berlaku untuk pengadaan ini (HPS tidak tercantum di SIRUP).</td>
+            </tr>
+            <tr>
+                <td class="col-label text-blue" style="background-color: #f0f4f8;">3. Review Rancangan Kontrak</td>
+                <td>Menyesuaikan format standar Pengadaan Langsung.</td>
+            </tr>
+            <tr>
+                <td class="col-label text-blue" style="background-color: #f0f4f8;">4. Review Dokumen Anggaran</td>
+                <td>Sesuai. Pagu tersedia sebesar Rp {{ number_format($paket->pagu, 0, ',', '.') }} bersumber dari {{ $paket->sumber_dana ?? 'APBD' }}.</td>
+            </tr>
+            <tr>
+                <td class="col-label text-blue" style="background-color: #f0f4f8;">5. Review RUP</td>
+                <td>Sesuai. ID Paket RUP: {{ $paket->kode_rup }}, Metode Pemilihan: {{ $paket->metode ?? 'Pengadaan Langsung' }}.</td>
+            </tr>
+            <tr>
+                <td class="col-label text-blue" style="background-color: #f0f4f8;">6. Review Waktu Penggunaan Barang/Jasa</td>
+                <td>Sesuai. Pemanfaatan: {{ $waktuPenggunaan }}, Jadwal Pelaksanaan: {{ $jadwal }}.</td>
+            </tr>
+            <tr>
+                <td class="col-label text-blue" style="background-color: #f0f4f8;">7. Review Analisis Pasar</td>
+                <td>Ketersediaan barang/jasa dan pelaku usaha di pasar dinilai memadai.</td>
+            </tr>
+        </table>
+
+        <!-- Section IV -->
+        <div class="section-title text-blue">IV. KESIMPULAN</div>
+        <p>Berdasarkan hasil reviu ke-7 (tujuh) aspek di atas, dokumen persiapan pengadaan paket <strong>{{ $paket->nama_paket }}</strong> dinyatakan LENGKAP dan telah memenuhi ketentuan untuk dilanjutkan ke tahap proses pengadaan berikutnya sesuai dengan peraturan perundang-undangan yang berlaku.</p>
+
+        <!-- Section V -->
+        <div class="section-title text-blue">V. PENUTUP</div>
+        <p>Demikian Berita Acara Persetujuan Paket ini dibuat dengan sebenar-benarnya dalam rangkap secukupnya, untuk dapat dipergunakan sebagaimana mestinya dan ditandatangani secara elektronik menggunakan QR Code oleh para pihak yang berwenang.</p>
+
+        {{-- SIGNATURES --}}
+        <table class="signatures-table" style="page-break-inside: avoid;">
+            <tr>
+                {{-- Pejabat Pengadaan (PP) --}}
+                <td>
+                    <div class="sig-title">Pejabat Pengadaan (PP)</div>
+                    <div class="qr-code">
+                        @if(isset($beritaAcara) && $beritaAcara->hasSignatureFrom('PP'))
+                            @php
+                                $ppUrl = asset('storage/' . $beritaAcara->ppSignature()->signature_image);
+                                $qrImagePP = base64_encode(
+                                    \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                                        ->merge(public_path('assets/logo-dpmd-bangkalan.png'), 0.3, true)
+                                        ->size(100)
+                                        ->errorCorrection('H')
+                                        ->generate($ppUrl)
+                                );
+                            @endphp
+                            <img src="data:image/png;base64,{!! $qrImagePP !!}" alt="QR PP">
+                        @else
+                            <div class="qr-placeholder">[ QR CODE VERIFIKASI ]</div>
+                        @endif
+                    </div>
+                    @if(isset($beritaAcara) && $beritaAcara->hasSignatureFrom('PP'))
+                        <div class="sig-name">{{ $beritaAcara->ppSignature()->user->nama }}</div>
+                        <div class="sig-nip">NIP. {{ $beritaAcara->ppSignature()->user->nip }}</div>
+                    @else
+                        <div class="sig-name" style="color: #999;">{{ $paket->pejabatPengadaan->nama ?? '.........................................' }}</div>
+                        <div class="sig-nip" style="color: #999;">NIP. {{ $paket->pejabatPengadaan->nip ?? '.........................' }}</div>
+                    @endif
+                </td>
+
+                {{-- Pejabat Pembuat Komitmen (PPK) --}}
+                <td>
+                    <div class="sig-title">Pejabat Pembuat Komitmen (PPK)</div>
+                    <div class="qr-code">
+                        @if(isset($beritaAcara) && $beritaAcara->hasSignatureFrom('PPK'))
+                            @php
+                                $ppkUrl = asset('storage/' . $beritaAcara->ppkSignature()->signature_image);
+                                $qrImagePPK = base64_encode(
+                                    \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                                        ->merge(public_path('assets/logo-dpmd-bangkalan.png'), 0.3, true)
+                                        ->size(100)
+                                        ->errorCorrection('H')
+                                        ->generate($ppkUrl)
+                                );
+                            @endphp
+                            <img src="data:image/png;base64,{!! $qrImagePPK !!}" alt="QR PPK">
+                        @else
+                            <div class="qr-placeholder">[ QR CODE VERIFIKASI ]</div>
+                        @endif
+                    </div>
+                    @if(isset($beritaAcara) && $beritaAcara->hasSignatureFrom('PPK'))
+                        <div class="sig-name">{{ $beritaAcara->ppkSignature()->user->nama }}</div>
+                        <div class="sig-nip">NIP. {{ $beritaAcara->ppkSignature()->user->nip }}</div>
+                    @else
+                        <div class="sig-name" style="color: #999;">{{ $paket->pejabatPembuatKomitmen->nama ?? '.........................................' }}</div>
+                        <div class="sig-nip" style="color: #999;">NIP. {{ $paket->pejabatPembuatKomitmen->nip ?? '.........................' }}</div>
+                    @endif
+                </td>
+            </tr>
+        </table>
+
+        <!-- Verification Box -->
+        <div class="verification-box">
+            <div class="verification-title">Verifikasi Dokumen</div>
+            <div class="verification-qr">
+                @php
+                    $veriUrl = isset($beritaAcara) ? route('verify', $beritaAcara->verification_hash) : '#';
+                    $qrImageVeri = base64_encode(
+                        \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                            ->merge(public_path('assets/logo-dpmd-bangkalan.png'), 0.3, true)
+                            ->size(80)
+                            ->errorCorrection('H')
+                            ->generate($veriUrl)
+                    );
+                @endphp
+                <img src="data:image/png;base64,{!! $qrImageVeri !!}" alt="QR Verifikasi">
+            </div>
+            <div class="verification-desc">
+                Pindai kode QR ini untuk memverifikasi keaslian dokumen pada sistem: {{ $veriUrl }}
+            </div>
         </div>
-    </div>
 
-    <div class="footer-note">
-        Dokumen ini sah dan dapat diverifikasi melalui QR Code / tautan verifikasi pada sistem.<br>
-        Segala perubahan yang dilakukan tanpa sepengetahuan pihak penerbit dokumen dinyatakan tidak sah dan tidak berlaku.
-    </div>
-
+        <div class="footer-note">
+            Dokumen ini sah dan dapat diverifikasi melalui QR Code / tautan verifikasi pada sistem.<br>
+            Segala perubahan yang dilakukan tanpa sepengetahuan pihak penerbit dokumen dinyatakan tidak sah dan tidak berlaku.
+        </div>
+    </main>
 </body>
 </html>

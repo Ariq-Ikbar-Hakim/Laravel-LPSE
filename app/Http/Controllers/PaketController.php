@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\Process\Process;
 
 class PaketController extends Controller
 {
@@ -44,32 +45,142 @@ class PaketController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'kode_rup' => ['required', 'string', 'max:50'],
-            'nama_paket' => ['required', 'string', 'max:255'],
-            'pagu' => ['required', 'numeric', 'min:0'],
-            'tahun_anggaran' => ['required', 'string', 'max:4'],
-            'metode_pengadaan' => ['nullable', 'string', 'max:255'],
-            'sumber_dana' => ['nullable', 'string', 'max:255'],
-            'jenis_pengadaan' => ['nullable', 'string', 'max:255'],
+            'pdf_sirup' => ['required', 'file', 'mimes:pdf', 'max:5120'],
             'pp_id' => ['required', 'exists:users,id'],
-            'keterangan_tambahan' => ['nullable', 'string'],
         ]);
 
-        $paket = Paket::create([
-            'ppk_id' => Auth::id(),
-            'kode_rup' => $request->kode_rup,
-            'nama_paket' => $request->nama_paket,
-            'pagu' => $request->pagu,
-            'status' => 'draft',
-            'metode' => $request->metode_pengadaan,
-            'sumber_dana' => $request->sumber_dana,
-            'jenis' => $request->jenis_pengadaan,
-            'pp_id' => $request->pp_id,
-            'tahun_anggaran' => $request->tahun_anggaran,
-            'keterangan_tambahan' => $request->keterangan_tambahan,
-        ]);
+        try {
+            $pdfPath = $request->file('pdf_sirup')->path();
+            $baseImagePath = storage_path('app/temp_sirup_' . time());
+            
+            // 1. Ekstrak PDF ke gambar menggunakan Ghostscript
+            $gsProcess = new Process(['gs', '-dSAFER', '-dBATCH', '-dNOPAUSE', '-r300', '-sDEVICE=png16m', '-sOutputFile=' . $baseImagePath . '_%d.png', $pdfPath]);
+            $gsProcess->run();
 
-        return redirect()->route('paket.show', $paket)->with('success', 'Draft paket berhasil dibuat. Silakan unggah dokumen persyaratan.');
+            if (!$gsProcess->isSuccessful()) {
+                throw new \Exception('Gagal mengekstrak gambar dari PDF menggunakan Ghostscript.');
+            }
+
+            // 2. Lakukan OCR pada setiap halaman menggunakan Tesseract
+            $text = '';
+            $images = glob($baseImagePath . '_*.png');
+            
+            if (empty($images)) {
+                throw new \Exception('Tidak ada halaman yang dapat dibaca dari PDF.');
+            }
+
+            foreach ($images as $img) {
+                $tesseract = new Process(['tesseract', $img, 'stdout', '-l', 'ind+eng']);
+                $tesseract->run();
+                $text .= $tesseract->getOutput() . "\n";
+                @unlink($img); // Bersihkan file temp
+            }
+
+            // Hapus spasi berlebih tapi pertahankan newline/tab
+            $text = preg_replace('/[ ]{2,}/', ' ', $text);
+            
+            // Ekstrak Data
+            $kode_rup = null;
+            if (preg_match('/Kode RUP[\s\t]+([0-9]+)/i', $text, $matches)) {
+                $kode_rup = trim($matches[1]);
+            }
+
+            $nama_paket = null;
+            if (preg_match('/Nama Paket[\s\t]+([^\n]+)/i', $text, $matches)) {
+                $nama_paket = trim($matches[1]);
+            }
+
+            $pagu = 0;
+            if (preg_match('/Total Pagu[\s\t]+Rp\.?[\s\t]*([\d\.]+)/i', $text, $matches)) {
+                $paguStr = str_replace('.', '', $matches[1]);
+                $pagu = (float) $paguStr;
+            }
+
+            $tahun_anggaran = null;
+            if (preg_match('/Tahun Anggaran[\s\t]+(\d{4})/i', $text, $matches)) {
+                $tahun_anggaran = trim($matches[1]);
+            }
+
+            $metode_pengadaan = null;
+            if (preg_match('/Metode Pemilihan[\s\t]+([^\n]+)/i', $text, $matches)) {
+                $metode_pengadaan = trim($matches[1]);
+            }
+
+            $sumber_dana = null;
+            if (preg_match('/(APBD|APBN|BLUD)[\s\t]+\d{4}/i', $text, $matches)) {
+                $sumber_dana = strtoupper($matches[1]);
+            } else if (preg_match('/Sumber Dana[\s\S]{0,100}?(APBD|APBN|BLUD)/i', $text, $matches)) {
+                $sumber_dana = strtoupper($matches[1]);
+            }
+
+            $jenis_pengadaan = null;
+            if (preg_match('/Jenis Pengadaan[\s\t]+([^\n\,]+)/i', $text, $matches)) {
+                $jenis_pengadaan = trim($matches[1]);
+            }
+
+            // Ekstrak 7 Spesifikasi Berita Acara
+            $uraian_pekerjaan = null;
+            if (preg_match('/Uraian Pekerjaan[\s\t]+([^\n]+)/i', $text, $matches)) {
+                $uraian_pekerjaan = trim($matches[1]);
+            }
+            
+            $spesifikasi_pekerjaan = null;
+            if (preg_match('/Spesifikasi Pekerjaan[\s\t]+([^\n]+)/i', $text, $matches)) {
+                $spesifikasi_pekerjaan = trim($matches[1]);
+            }
+            
+            $jadwal_pelaksanaan = null;
+            if (preg_match('/Jadwal Pelaksanaan Kontrak[\s\t]+Mulai[\s\t]+Akhir[\s\t\n]+([a-z]+[\s\t]+\d{4})[\s\t]+([a-z]+[\s\t]+\d{4})/i', $text, $matches)) {
+                $jadwal_pelaksanaan = "Mulai " . trim($matches[1]) . " - Akhir " . trim($matches[2]);
+            }
+            
+            $pemanfaatan = null;
+            if (preg_match('/Pemanfaatan Barang\/Jasa[\s\t]+Mulai[\s\t]+Akhir[\s\t\n]+([a-z]+[\s\t]+\d{4})[\s\t]+([a-z]+[\s\t]+\d{4})/i', $text, $matches)) {
+                $pemanfaatan = "Mulai " . trim($matches[1]) . " - Akhir " . trim($matches[2]);
+            }
+
+            $keterangan_tambahan = json_encode([
+                'spesifikasi_teknis' => $spesifikasi_pekerjaan,
+                'uraian_pekerjaan' => $uraian_pekerjaan,
+                'jadwal_pelaksanaan' => $jadwal_pelaksanaan,
+                'waktu_penggunaan' => $pemanfaatan,
+                'sumber_data' => 'Otomatis via OCR PDF SIRUP'
+            ]);
+
+            $paket = Paket::create([
+                'ppk_id' => Auth::id(),
+                'kode_rup' => $kode_rup ?? '0000000',
+                'nama_paket' => $nama_paket ?? 'Nama Paket Tidak Terbaca',
+                'pagu' => $pagu,
+                'status' => 'draft',
+                'metode' => $metode_pengadaan,
+                'sumber_dana' => $sumber_dana,
+                'jenis' => $jenis_pengadaan,
+                'pp_id' => $request->pp_id,
+                'tahun_anggaran' => $tahun_anggaran ?? date('Y'),
+                'keterangan_tambahan' => $keterangan_tambahan,
+            ]);
+
+            $file = $request->file('pdf_sirup');
+            $extension = $file->getClientOriginalExtension();
+            $timestamp = time();
+            $fileName = "paket_{$paket->id}_{$timestamp}_sirup.{$extension}";
+            $filePath = $file->storeAs("lampiran/{$paket->id}", $fileName, 'public');
+
+            Lampiran::create([
+                'paket_id' => $paket->id,
+                'file_path' => $filePath,
+                'nama_file' => 'Dokumen_SIRUP_Upload.pdf',
+                'tipe_dokumen' => 'Dokumen Anggaran',
+                'uploaded_by' => Auth::id(),
+                'status_validasi' => 'pending',
+            ]);
+
+            return redirect()->route('paket.show', $paket)->with('success', 'Draft paket berhasil dibuat secara otomatis dari dokumen SIRUP. Silakan unggah dokumen persyaratan lainnya.');
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal memproses dokumen SIRUP: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -122,8 +233,6 @@ class PaketController extends Controller
             ->exists();
 
         if ($adaRevisi) {
-            // Hitung berapa kali sudah upload ulang setelah ada revisi (status pending sesudah ada revisi)
-            // Revision counter: berapa lampiran pending yang ada setelah lampiran revisi terakhir
             $lampiranRevisiTerakhir = Lampiran::where('paket_id', $paket->id)
                 ->where('tipe_dokumen', $request->tipe_dokumen)
                 ->where('status_validasi', 'revisi')
@@ -137,7 +246,6 @@ class PaketController extends Controller
 
             $versionLabel = 'r' . $revisiCount;
         } else {
-            // Belum ada revisi sama sekali, hitung sebagai versi biasa
             $versionCount = Lampiran::where('paket_id', $paket->id)
                 ->where('tipe_dokumen', $request->tipe_dokumen)
                 ->count() + 1;
