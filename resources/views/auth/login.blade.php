@@ -41,13 +41,6 @@
         </div>
 
         <!-- reCAPTCHA bypassed -->
-            @else
-                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Verifikasi Keamanan</label>
-                <div class="g-recaptcha overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-2" data-sitekey="{{ config('services.recaptcha.sitekey') }}"></div>
-                <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-            @endif
-            <x-input-error :messages="$errors->get('g-recaptcha-response')" class="mt-1" />
-        </div>
 
         <!-- Remember & Forgot -->
         <div class="flex items-center justify-between text-xs font-semibold">
