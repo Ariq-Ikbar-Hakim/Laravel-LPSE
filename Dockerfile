@@ -4,11 +4,13 @@ FROM php:8.5-cli
 RUN apt-get update && apt-get install -y \
     git unzip zip curl ghostscript tesseract-ocr tesseract-ocr-ind \
     libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
-    libzip-dev libonig-dev libxml2-dev \
+    libzip-dev libonig-dev libxml2-dev libmagickwand-dev imagemagick \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo pdo_mysql gd zip
+    && docker-php-ext-install pdo pdo_mysql gd zip \
+    && pecl install imagick \
+    && docker-php-ext-enable imagick
 
 # Salin Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
