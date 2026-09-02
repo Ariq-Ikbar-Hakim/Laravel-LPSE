@@ -4,9 +4,7 @@
     <meta charset="utf-8">
     <title>Berita Acara Persetujuan Paket</title>
     <style>
-        @page {
-            margin: 2.5cm 2cm 3cm 2cm; /* Top, Right, Bottom, Left */
-        }
+        /* Margins are handled by Browsershot */
         body { 
             font-family: "Times New Roman", Times, serif; 
             font-size: 11pt; 
@@ -97,29 +95,10 @@
             page-break-inside: avoid;
         }
         
-        /* Footer pagination menggunakan tag footer standar */
-        footer {
-            position: fixed;
-            bottom: -2cm; /* Berada di dalam margin bawah (3cm) */
-            left: 0px;
-            right: 0px;
-            height: 1.5cm;
-            font-size: 8pt;
-            color: #777;
-        }
-        footer .left { float: left; }
-        footer .right { float: right; text-align: right; }
-        .page-number:before { content: counter(page); }
+        /* No footer css, browsershot handles it */
     </style>
 </head>
 <body>
-    <!-- Footer diletakkan di paling atas body untuk DOMPDF -->
-    <footer>
-        <div class="left">Dokumen ini dihasilkan otomatis oleh Sistem Pengadaan Barang/Jasa</div>
-        <div class="right">Halaman <span class="page-number"></span></div>
-    </footer>
-
-    <!-- Main content dibungkus tag main -->
     <main>
         <!-- Header -->
         <table class="header-table">

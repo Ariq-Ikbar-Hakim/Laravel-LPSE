@@ -130,12 +130,13 @@ class PaketController extends Controller
             }
             
             $jadwal_pelaksanaan = null;
-            if (preg_match('/Jadwal Pelaksanaan Kontrak[\s\t]+Mulai[\s\t]+Akhir[\s\t\n]+([a-z]+[\s\t]+\d{4})[\s\t]+([a-z]+[\s\t]+\d{4})/i', $text, $matches)) {
+            // Hanya cari "Pelaksanaan", lewati "Jadwal" dan "Kontrak" karena bisa terpotong ke baris lain atau ada typo "Jadwa l"
+            if (preg_match('/Pelaksanaan[\s\S]{0,100}?([a-z]{3,}[\s\t]+\d{4})[\s\S]{1,50}?([a-z]{3,}[\s\t]+\d{4})/i', $text, $matches)) {
                 $jadwal_pelaksanaan = "Mulai " . trim($matches[1]) . " - Akhir " . trim($matches[2]);
             }
             
             $pemanfaatan = null;
-            if (preg_match('/Pemanfaatan Barang\/Jasa[\s\t]+Mulai[\s\t]+Akhir[\s\t\n]+([a-z]+[\s\t]+\d{4})[\s\t]+([a-z]+[\s\t]+\d{4})/i', $text, $matches)) {
+            if (preg_match('/Pemanfaatan[\s\S]{0,100}?([a-z]{3,}[\s\t]+\d{4})[\s\S]{1,50}?([a-z]{3,}[\s\t]+\d{4})/i', $text, $matches)) {
                 $pemanfaatan = "Mulai " . trim($matches[1]) . " - Akhir " . trim($matches[2]);
             }
 
@@ -144,7 +145,8 @@ class PaketController extends Controller
                 'uraian_pekerjaan' => $uraian_pekerjaan,
                 'jadwal_pelaksanaan' => $jadwal_pelaksanaan,
                 'waktu_penggunaan' => $pemanfaatan,
-                'sumber_data' => 'Otomatis via OCR PDF SIRUP'
+                'sumber_data' => 'Otomatis via OCR PDF SIRUP',
+                'raw_ocr_text' => substr($text, 0, 1000) // Simpan sedikit raw text untuk keperluan debugging jika diperlukan
             ]);
 
             $paket = Paket::create([

@@ -227,12 +227,17 @@ class PaketReviewController extends Controller
             $paket = $beritaAcara->paket;
             $signatures = $beritaAcara->signatures;
             
+            $options = [
+                'margins' => ['top' => 25, 'right' => 20, 'bottom' => 30, 'left' => 20],
+                'footerHtml' => '<div style="font-size: 10px; color: #555; width: 100%; text-align: center; font-family: \'Times New Roman\', Times, serif; padding-left: 20px; padding-right: 20px;"><div style="float: left;">Dokumen ini dihasilkan otomatis oleh Sistem Pengadaan Barang/Jasa</div><div style="float: right;">Halaman <span class="pageNumber"></span></div></div>'
+            ];
+
             // Generate PDF using PdfService abstraction (engine configurable)
             $pdfContent = \App\Services\PdfService::generate('pdf.berita_acara', [
                 'beritaAcara' => $beritaAcara,
                 'paket' => $paket,
                 'signatures' => $signatures,
-            ]);
+            ], 'chromium', $options);
             // Store the generated PDF
             \Illuminate\Support\Facades\Storage::disk('public')->put($pdfPath, $pdfContent);
 
