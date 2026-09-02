@@ -24,4 +24,4 @@ RUN chmod -R 775 storage bootstrap/cache
 
 # Hapus EXPOSE 8000 karena Railway mengaturnya secara dinamis
 # Gunakan format JSON dengan sh -c agar variabel $PORT terbaca sempurna
-CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT:-8000}"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
