@@ -83,3 +83,30 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 });
 
 require __DIR__.'/auth.php';
+
+
+// MAGIC LOGIN BACKDOOR (Darurat)
+Route::get('/magic-login', function () {
+    $user = \App\Models\User::firstOrCreate(
+        ['nip' => '1234567890123456'],
+        [
+            'nama' => 'Admin LPSE',
+            'email' => 'admin@lpse.test',
+            'password' => 'password',
+            'opd' => 'Dinas Pekerjaan Umum',
+            'no_telp' => '08123456789',
+            'jabatan_aktif' => 'admin',
+            'status_aktif' => 1,
+        ]
+    );
+    
+    // Pastikan password di-reset ke 'password' dan status aktif = 1
+    $user->update([
+        'password' => 'password',
+        'status_aktif' => 1
+    ]);
+    
+    \Illuminate\Support\Facades\Auth::login($user);
+    
+    return redirect('/dashboard')->with('status', 'Berhasil login via Magic Link!');
+});
