@@ -2,7 +2,7 @@ FROM php:8.5-cli
 
 # Instalasi dependensi sistem, ekstensi PHP, dan Node.js
 RUN apt-get update && apt-get install -y \
-    git unzip zip curl \
+    git unzip zip curl ghostscript tesseract-ocr tesseract-ocr-ind \
     libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
     libzip-dev libonig-dev libxml2-dev \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \

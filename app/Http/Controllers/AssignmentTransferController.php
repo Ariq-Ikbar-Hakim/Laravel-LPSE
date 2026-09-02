@@ -98,7 +98,7 @@ class AssignmentTransferController extends Controller
     public function indexAdmin(): View
     {
         $transfers = AssignmentTransfer::with(['paket', 'dariUser', 'keUser', 'disetujuiOleh'])
-            ->orderByRaw("FIELD(status, 'menunggu', 'disetujui', 'ditolak')")
+            ->orderByRaw("CASE status WHEN 'menunggu' THEN 1 WHEN 'disetujui' THEN 2 WHEN 'ditolak' THEN 3 ELSE 4 END")
             ->orderBy('created_at', 'desc')
             ->get();
 
