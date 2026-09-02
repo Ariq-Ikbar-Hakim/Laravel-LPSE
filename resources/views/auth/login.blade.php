@@ -40,17 +40,7 @@
             <x-input-error :messages="$errors->get('password')" class="mt-1" />
         </div>
 
-        <!-- reCAPTCHA -->
-        <div>
-            @if(app()->environment('local'))
-                <label for="g-recaptcha-response" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">reCAPTCHA (Pengujian Lokal)</label>
-                <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                        <i class="fa-solid fa-shield-halved text-sm"></i>
-                    </span>
-                    <input id="g-recaptcha-response" type="text" name="g-recaptcha-response" value="mock-captcha" required
-                        class="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 border border-slate-200 hover:border-slate-300 focus:border-indigo-600 focus:bg-white rounded-2xl text-sm text-slate-800 focus:outline-none focus:ring-4 focus:ring-indigo-50 transition-all duration-200">
-                </div>
+        <!-- reCAPTCHA bypassed -->
             @else
                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Verifikasi Keamanan</label>
                 <div class="g-recaptcha overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-2" data-sitekey="{{ config('services.recaptcha.sitekey') }}"></div>

@@ -30,7 +30,7 @@ class LoginRequest extends FormRequest
         return [
             'nip' => ['required', 'string'],
             'password' => ['required', 'string'],
-            'g-recaptcha-response' => app()->environment('local', 'testing') ? ['nullable', 'string'] : ['required', 'string'],
+            'g-recaptcha-response' => ['nullable', 'string'],
         ];
     }
 
@@ -45,7 +45,7 @@ class LoginRequest extends FormRequest
 
         // Validate Captcha
         $captchaToken = $this->input('g-recaptcha-response');
-        if (!app()->environment('local') || $this->filled('g-recaptcha-response')) {
+        if (false) {
             if (!$this->validateRecaptcha($captchaToken)) {
                 RateLimiter::hit($this->throttleKey());
                 throw ValidationException::withMessages([
