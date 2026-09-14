@@ -495,17 +495,19 @@
                                                         <p class="text-xs">Berita Acara telah selesai ditandatangani secara digital oleh semua pihak.</p>
                                                     </div>
                                                 </div>
-                                                @if($ba->file_laporan)
-                                                <a href="{{ Storage::url($ba->file_laporan) }}" target="_blank" class="w-fit bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-xl text-sm transition shadow-sm flex items-center gap-2">
-                                                    <i class="fa-solid fa-file-pdf"></i> Lihat / Unduh Dokumen PDF Final
-                                                </a>
-                                                @endif
                                             </div>
                                         @else
                                             <p class="text-sm text-slate-500">Menunggu PP menandatangani Berita Acara terlebih dahulu.</p>
                                         @endif
                                     @endif
                                 </div>
+                                @if($ba->status === 'selesai' && $ba->file_laporan)
+                                    <a href="{{ Storage::disk('public')->url($ba->file_laporan) }}" target="_blank" class="inline-flex items-center gap-2 mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-xl text-sm">
+                                        <i class="fa-solid fa-file-pdf"></i> Lihat / Unduh Dokumen PDF Final
+                                    </a>
+                                @elseif($ba->status === 'selesai')
+                                    <p class="mt-4 text-sm text-amber-700">PDF final belum tersedia. Hubungi admin untuk memulihkan dokumen.</p>
+                                @endif
                             @endif
                         </div>
                     </div>

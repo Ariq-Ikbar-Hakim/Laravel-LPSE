@@ -2,13 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Paket;
-use App\Models\Lampiran;
-use App\Models\DocumentComment;
 use App\Http\Requests\ReviewLampiranRequest;
+use App\Models\BeritaAcara;
+use App\Models\DocumentComment;
+use App\Models\Lampiran;
+use App\Models\Paket;
+use App\Models\Signature;
+use App\Services\PdfService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class PaketReviewController extends Controller
 {
@@ -53,7 +61,7 @@ class PaketReviewController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', "Status dokumen {$lampiran->tipe_dokumen} diperbarui menjadi: " . ucfirst($request->status_validasi));
+        return redirect()->back()->with('success', "Status dokumen {$lampiran->tipe_dokumen} diperbarui menjadi: ".ucfirst($request->status_validasi));
     }
 
     /**
@@ -77,16 +85,16 @@ class PaketReviewController extends Controller
         // Jika disetujui, kita setujui semua lampiran yang masih pending
         if ($request->status === 'disetujui') {
             $paket->lampiran()->where('status_validasi', 'pending')->update(['status_validasi' => 'disetujui']);
-            
+
             // Otomatis buat Berita Acara jika belum ada agar PP bisa langsung tanda tangan
-            $beritaAcara = \App\Models\BeritaAcara::where('paket_id', $paket->id)->first();
-            if (!$beritaAcara) {
-                \App\Models\BeritaAcara::create([
+            $beritaAcara = BeritaAcara::where('paket_id', $paket->id)->first();
+            if (! $beritaAcara) {
+                BeritaAcara::create([
                     'paket_id' => $paket->id,
-                    'nomor_ba' => 'BA/' . date('Y/m/d') . '/' . $paket->id,
+                    'nomor_ba' => 'BA/'.date('Y/m/d').'/'.$paket->id,
                     'tanggal_ba' => now(),
                     'status' => 'draft',
-                    'verification_hash' => \Illuminate\Support\Str::random(40),
+                    'verification_hash' => Str::random(40),
                 ]);
             }
         }
@@ -97,7 +105,7 @@ class PaketReviewController extends Controller
                 $lampiran = Lampiran::find($lampiranId);
                 if ($lampiran && $lampiran->paket_id === $paket->id) {
                     $lampiran->update(['status_validasi' => 'revisi']);
-                    
+
                     if ($request->filled('catatan')) {
                         DocumentComment::create([
                             'paket_id' => $paket->id,
@@ -120,7 +128,7 @@ class PaketReviewController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', "Status review paket berhasil diubah menjadi: " . str_replace('_', ' ', ucfirst($request->status)));
+        return redirect()->back()->with('success', 'Status review paket berhasil diubah menjadi: '.str_replace('_', ' ', ucfirst($request->status)));
     }
 
     /**
@@ -128,7 +136,8 @@ class PaketReviewController extends Controller
      */
     public function bypassCreate()
     {
-        return view('paket.bypass');
+        $ppkUsers = \App\Models\User::where('jabatan_aktif', 'PPK')->where('status_aktif', 1)->orderBy('nama')->get();
+        return view('paket.bypass', compact('ppkUsers'));
     }
 
     /**
@@ -137,23 +146,36 @@ class PaketReviewController extends Controller
     public function bypassStore(Request $request)
     {
         $request->validate([
+            'ppk_id' => ['required', \Illuminate\Validation\Rule::exists('users', 'id')->where('jabatan_aktif', 'PPK')->where('status_aktif', 1)],
             'kode_rup' => ['required', 'string', 'max:50'],
             'nama_paket' => ['required', 'string', 'max:255'],
             'pagu' => ['required', 'numeric', 'min:0'],
         ]);
 
         // Buat paket bypass sesuai PRD
-        $paket = Paket::create([
-            'ppk_id' => null, // Jalur bypass PP, tanpa PPK
-            'pp_id' => Auth::id(),
-            'kode_rup' => $request->kode_rup,
-            'nama_paket' => $request->nama_paket,
-            'pagu' => $request->pagu,
-            'status' => 'disetujui', // Otomatis disetujui
-            'metode' => 'Manual (Dibuat PP)',
-            'sumber_dana' => 'APBD',
-            'jenis' => 'Barang/Jasa',
-        ]);
+        $paket = DB::transaction(function () use ($request) {
+            $paket = Paket::create([
+                'ppk_id' => $request->ppk_id,
+                'pp_id' => Auth::id(),
+                'kode_rup' => $request->kode_rup,
+                'nama_paket' => $request->nama_paket,
+                'pagu' => $request->pagu,
+                'status' => 'disetujui', // Otomatis disetujui
+                'metode' => 'Manual (Dibuat PP)',
+                'sumber_dana' => 'APBD',
+                'jenis' => 'Barang/Jasa',
+            ]);
+
+            BeritaAcara::create([
+                'paket_id' => $paket->id,
+                'nomor_ba' => 'BA/'.date('Y/m/d').'/'.$paket->id,
+                'tanggal_ba' => now(),
+                'status' => 'draft',
+                'verification_hash' => Str::random(40),
+            ]);
+
+            return $paket;
+        });
 
         return redirect()->route('paket.show', $paket)->with('success', 'Paket Manual (Bypass PP) berhasil dibuat dengan status Disetujui.');
     }
@@ -161,7 +183,7 @@ class PaketReviewController extends Controller
     /**
      * Sign the Berita Acara (PP or PPK).
      */
-    public function signBa(Request $request, \App\Models\BeritaAcara $beritaAcara)
+    public function signBa(Request $request, BeritaAcara $beritaAcara)
     {
         $user = Auth::user();
 
@@ -169,89 +191,112 @@ class PaketReviewController extends Controller
             'signature_image' => ['required', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
         ]);
 
-        if ($user->jabatan_aktif === 'PP') {
-            Gate::authorize('signAsPp', $beritaAcara);
+        $path = null;
+        $pdfPath = null;
+        try {
+            return DB::transaction(function () use ($request, $user, $beritaAcara, &$path, &$pdfPath) {
+                $beritaAcara = BeritaAcara::whereKey($beritaAcara->id)->lockForUpdate()->firstOrFail();
 
-            $path = $request->file('signature_image')->store('signatures', 'public');
+                if ($user->jabatan_aktif === 'PP') {
+                    Gate::authorize('signAsPp', $beritaAcara);
 
-            \App\Models\Signature::create([
-                'berita_acara_id' => $beritaAcara->id,
-                'user_id' => $user->id,
-                'role_saat_ttd' => 'PP',
-                'urutan' => 1,
-                'signature_image' => $path,
-                'ip_address' => $request->ip(),
-                'signed_at' => now(),
-            ]);
+                    $path = $request->file('signature_image')->store('signatures', 'public');
 
-            $beritaAcara->update([
-                'status' => 'tanda_tangan_pertama',
-            ]);
+                    Signature::create([
+                        'berita_acara_id' => $beritaAcara->id,
+                        'user_id' => $user->id,
+                        'role_saat_ttd' => 'PP',
+                        'urutan' => 1,
+                        'signature_image' => $path,
+                        'ip_address' => $request->ip(),
+                        'signed_at' => now(),
+                    ]);
 
-            return redirect()->back()->with('success', 'Berita Acara berhasil ditandatangani oleh Pejabat Pengadaan.');
-        }
+                    $beritaAcara->update([
+                        'status' => 'tanda_tangan_pertama',
+                    ]);
 
-        if ($user->jabatan_aktif === 'PPK') {
-            Gate::authorize('signAsPpk', $beritaAcara);
+                    return redirect()->back()->with('success', 'Berita Acara berhasil ditandatangani oleh Pejabat Pengadaan.');
+                }
 
-            $path = $request->file('signature_image')->store('signatures', 'public');
+                if ($user->jabatan_aktif === 'PPK') {
+                    Gate::authorize('signAsPpk', $beritaAcara);
 
-            // Simpan tanda tangan PPK
-            $signaturePpk = \App\Models\Signature::create([
-                'berita_acara_id' => $beritaAcara->id,
-                'user_id' => $user->id,
-                'role_saat_ttd' => 'PPK',
-                'urutan' => 2,
-                'signature_image' => $path,
-                'ip_address' => $request->ip(),
-                'signed_at' => now(),
-            ]);
+                    $path = $request->file('signature_image')->store('signatures', 'public');
 
-            // Update status BA dan status paket
-            $beritaAcara->update([
-                'status' => 'selesai',
-            ]);
+                    // Simpan tanda tangan PPK
+                    $signaturePpk = Signature::create([
+                        'berita_acara_id' => $beritaAcara->id,
+                        'user_id' => $user->id,
+                        'role_saat_ttd' => 'PPK',
+                        'urutan' => 2,
+                        'signature_image' => $path,
+                        'ip_address' => $request->ip(),
+                        'signed_at' => now(),
+                    ]);
 
-            $beritaAcara->paket->update([
-                'status' => 'selesai',
-            ]);
+                    // Update status BA dan status paket
+                    $beritaAcara->update([
+                        'status' => 'selesai',
+                    ]);
 
-            // 2. Generate PDF Final
-            $timestamp = time();
-            $pdfFileName = "BA_Paket_{$beritaAcara->paket_id}_{$timestamp}.pdf";
-            $pdfPath = "berita-acara/{$pdfFileName}";
-            if (!\Illuminate\Support\Facades\Storage::disk('public')->exists('berita-acara')) {
-                \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory('berita-acara');
+                    $beritaAcara->paket->update([
+                        'status' => 'selesai',
+                    ]);
+
+                    // 2. Generate PDF Final
+                    $timestamp = time();
+                    $pdfFileName = "BA_Paket_{$beritaAcara->paket_id}_{$timestamp}.pdf";
+                    $pdfPath = "berita-acara/{$pdfFileName}";
+                    if (! Storage::disk('public')->exists('berita-acara')) {
+                        Storage::disk('public')->makeDirectory('berita-acara');
+                    }
+
+                    $paket = $beritaAcara->paket;
+                    $signatures = $beritaAcara->signatures;
+
+                    $options = [
+                        'margins' => ['top' => 25, 'right' => 20, 'bottom' => 30, 'left' => 20],
+                        'footerHtml' => '<div style="font-size: 10px; color: #555; width: 100%; text-align: center; font-family: \'Times New Roman\', Times, serif; padding-left: 20px; padding-right: 20px;"><div style="float: left;">Dokumen ini dihasilkan otomatis oleh Sistem Pengadaan Barang/Jasa</div><div style="float: right;">Halaman <span class="pageNumber"></span></div></div>',
+                    ];
+
+                    // Generate PDF using PdfService abstraction (engine configurable)
+                    $pdfContent = app(PdfService::class)->generate('pdf.berita_acara', [
+                        'beritaAcara' => $beritaAcara,
+                        'paket' => $paket,
+                        'signatures' => $signatures,
+                    ], 'chromium', $options);
+                    // Store the generated PDF
+                    if (! Storage::disk('public')->put($pdfPath, $pdfContent)) {
+                        throw new \RuntimeException('Gagal menyimpan PDF final.');
+                    }
+
+                    // 3. Hitung SHA-256 dan simpan di signatures
+                    $fileContent = Storage::disk('public')->get($pdfPath);
+                    $fileHash = hash('sha256', $fileContent);
+
+                    // Simpan hash ke database
+                    $beritaAcara->update(['file_laporan' => $pdfPath]);
+                    $beritaAcara->signatures()->update(['hash_dokumen' => $fileHash]);
+
+                    return redirect()->back()->with('success', 'Berita Acara berhasil disahkan (selesai ditandatangani kedua belah pihak) dan PDF final siap diunduh.');
+                }
+
+                abort(403, 'Peran jabatan Anda tidak valid untuk menandatangani dokumen ini.');
+            });
+        } catch (\Throwable $exception) {
+            if ($path) {
+                Storage::disk('public')->delete($path);
             }
+            if ($pdfPath) {
+                Storage::disk('public')->delete($pdfPath);
+            }
+            if ($exception instanceof AuthorizationException || $exception instanceof HttpExceptionInterface) {
+                throw $exception;
+            }
+            report($exception);
 
-            $paket = $beritaAcara->paket;
-            $signatures = $beritaAcara->signatures;
-            
-            $options = [
-                'margins' => ['top' => 25, 'right' => 20, 'bottom' => 30, 'left' => 20],
-                'footerHtml' => '<div style="font-size: 10px; color: #555; width: 100%; text-align: center; font-family: \'Times New Roman\', Times, serif; padding-left: 20px; padding-right: 20px;"><div style="float: left;">Dokumen ini dihasilkan otomatis oleh Sistem Pengadaan Barang/Jasa</div><div style="float: right;">Halaman <span class="pageNumber"></span></div></div>'
-            ];
-
-            // Generate PDF using PdfService abstraction (engine configurable)
-            $pdfContent = \App\Services\PdfService::generate('pdf.berita_acara', [
-                'beritaAcara' => $beritaAcara,
-                'paket' => $paket,
-                'signatures' => $signatures,
-            ], 'chromium', $options);
-            // Store the generated PDF
-            \Illuminate\Support\Facades\Storage::disk('public')->put($pdfPath, $pdfContent);
-
-            // 3. Hitung SHA-256 dan simpan di signatures
-            $fileContent = \Illuminate\Support\Facades\Storage::disk('public')->get($pdfPath);
-            $fileHash = hash('sha256', $fileContent);
-
-            // Simpan hash ke database
-            $beritaAcara->update(['file_laporan' => $pdfPath]);
-            $beritaAcara->signatures()->update(['hash_dokumen' => $fileHash]);
-
-            return redirect()->back()->with('success', 'Berita Acara berhasil disahkan (selesai ditandatangani kedua belah pihak) dan PDF final siap diunduh.');
+            return redirect()->back()->with('error', 'Tanda tangan belum disimpan karena pembuatan dokumen gagal. Silakan coba kembali atau hubungi admin.');
         }
-
-        abort(403, 'Peran jabatan Anda tidak valid untuk menandatangani dokumen ini.');
     }
 }

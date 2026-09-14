@@ -16,6 +16,17 @@
                     <form method="POST" action="{{ route('paket-bypass.store') }}" class="space-y-6">
                         @csrf
 
+                        <div>
+                            <x-input-label for="ppk_id" :value="__('PPK Penandatangan')" />
+                            <select id="ppk_id" name="ppk_id" required class="block mt-1 w-full rounded-md border-gray-300 dark:bg-gray-900">
+                                <option value="">Pilih PPK yang akan mengesahkan dokumen</option>
+                                @foreach($ppkUsers as $ppk)
+                                    <option value="{{ $ppk->id }}" @selected(old('ppk_id') == $ppk->id)>{{ $ppk->nama }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('ppk_id')" class="mt-2" />
+                        </div>
+
                         <!-- Kode RUP -->
                         <div>
                             <x-input-label for="kode_rup" :value="__('Kode RUP')" />

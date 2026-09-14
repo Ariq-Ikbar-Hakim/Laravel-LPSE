@@ -310,7 +310,7 @@
 
         <script>
         document.addEventListener("DOMContentLoaded", function() {
-            const statusStats = JSON.parse('{!! json_encode($data["chart_status_stats"] ?? []) !!}');
+            const statusStats = {{ Illuminate\Support\Js::from($data['chart_status_stats'] ?? []) }};
             const labels = ['Draft', 'Dikirim', 'Kaji Ulang', 'Perlu Revisi', 'Disetujui', 'Selesai'];
             const keys   = ['draft', 'dikirim', 'kaji_ulang', 'perlu_revisi', 'disetujui', 'selesai'];
             const values = keys.map(k => statusStats[k] || 0);
@@ -502,7 +502,7 @@
 
         <script>
         document.addEventListener("DOMContentLoaded", function() {
-            const metodeStats = JSON.parse('{!! json_encode($data["chart_metode_stats"] ?? []) !!}');
+            const metodeStats = {{ Illuminate\Support\Js::from($data['chart_metode_stats'] ?? []) }};
             const metKeys = Object.keys(metodeStats).length > 0 ? Object.keys(metodeStats) : ['Belum ada data'];
             const metVals = Object.values(metodeStats).length > 0 ? Object.values(metodeStats) : [1];
             const colors  = ['#4f46e5','#a78bfa','#34d399','#fbbf24','#f87171','#38bdf8'];
@@ -681,7 +681,7 @@
 
         <script>
         document.addEventListener("DOMContentLoaded", function() {
-            const jenisStats = JSON.parse('{!! json_encode($data["chart_jenis_stats"] ?? []) !!}');
+            const jenisStats = {{ Illuminate\Support\Js::from($data['chart_jenis_stats'] ?? []) }};
             const keys   = Object.keys(jenisStats).length > 0 ? Object.keys(jenisStats) : ['Belum ada data'];
             const values = Object.values(jenisStats).length > 0 ? Object.values(jenisStats) : [1];
             const colors = ['#6366f1','#8b5cf6','#10b981','#f59e0b','#f87171','#38bdf8'];

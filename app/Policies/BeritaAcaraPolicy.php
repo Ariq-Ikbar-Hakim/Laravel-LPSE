@@ -46,7 +46,7 @@ class BeritaAcaraPolicy
         }
 
         // PP hanya bisa tanda tangan jika belum tanda tangan (status BA: draft)
-        return $beritaAcara->status === 'draft' && !$beritaAcara->hasSignatureFrom('PP');
+        return $beritaAcara->status === 'draft' && ! $beritaAcara->hasSignatureFrom('PP');
     }
 
     /**
@@ -70,9 +70,12 @@ class BeritaAcaraPolicy
             return false;
         }
 
-        // PPK tidak bisa tanda tangan sebelum PP menandatangani
-        // Tapi jika status sudah selesai atau tanda_tangan_pertama, boleh.
-        if ($beritaAcara->status !== 'tanda_tangan_pertama' && $beritaAcara->status !== 'selesai' && !$beritaAcara->hasSignatureFrom('PP')) {
+        // Kedua kondisi wajib terpenuhi sebelum pengesahan final.
+        if ($beritaAcara->status !== 'tanda_tangan_pertama' || ! $beritaAcara->hasSignatureFrom('PP')) {
+            return false;
+        }
+
+        if ($paket->ppk_id === null && ! $paket->lampiran()->where('status_validasi', 'disetujui')->exists()) {
             return false;
         }
 

@@ -104,7 +104,7 @@
         <table class="header-table">
             <tr>
                 <td class="header-logo">
-                    <img src="{{ public_path('assets/logo-dpmd-bangkalan.png') }}" alt="Logo">
+                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('assets/logo-dpmd-bangkalan.png'))) }}" alt="Logo">
                 </td>
                 <td class="header-text text-blue">
                     <div class="header-title-1">PEMERINTAH KABUPATEN BANGKALAN</div>
@@ -129,7 +129,7 @@
         <p>Pada hari ini, tanggal <strong>{{ \Carbon\Carbon::parse($beritaAcara->tanggal_ba ?? now())->translatedFormat('d F Y') }}</strong>, Pejabat Pengadaan (PP) dan Pejabat Pembuat Komitmen (PPK) telah melaksanakan reviu dan menyetujui dokumen persiapan pengadaan paket sebagaimana rincian pada bagian II di bawah ini, sebagai kelanjutan dari proses persiapan pengadaan yang tercantum dalam Rencana Umum Pengadaan (RUP).</p>
 
         @php
-            $ketTambahan = json_decode($paket->keterangan_tambahan, true) ?? [];
+            $ketTambahan = json_decode($paket->keterangan_tambahan ?? '', true) ?? [];
             $spesifikasi = $ketTambahan['spesifikasi_teknis'] ?? '-';
             $uraian = $ketTambahan['uraian_pekerjaan'] ?? '-';
             $waktuPenggunaan = $ketTambahan['waktu_penggunaan'] ?? '-';
@@ -209,11 +209,7 @@
                             @php
                                 $ppUrl = asset('storage/' . $beritaAcara->ppSignature()->signature_image);
                                 $qrImagePP = base64_encode(
-                                    \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-                                        ->merge(public_path('assets/logo-dpmd-bangkalan.png'), 0.3, true)
-                                        ->size(100)
-                                        ->errorCorrection('H')
-                                        ->generate($ppUrl)
+                                    \App\Services\QrCodeService::png($ppUrl)
                                 );
                             @endphp
                             <img src="data:image/png;base64,{!! $qrImagePP !!}" alt="QR PP">
@@ -238,11 +234,7 @@
                             @php
                                 $ppkUrl = asset('storage/' . $beritaAcara->ppkSignature()->signature_image);
                                 $qrImagePPK = base64_encode(
-                                    \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-                                        ->merge(public_path('assets/logo-dpmd-bangkalan.png'), 0.3, true)
-                                        ->size(100)
-                                        ->errorCorrection('H')
-                                        ->generate($ppkUrl)
+                                    \App\Services\QrCodeService::png($ppkUrl)
                                 );
                             @endphp
                             <img src="data:image/png;base64,{!! $qrImagePPK !!}" alt="QR PPK">
@@ -268,11 +260,7 @@
                 @php
                     $veriUrl = isset($beritaAcara) ? route('verify', $beritaAcara->verification_hash) : '#';
                     $qrImageVeri = base64_encode(
-                        \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-                            ->merge(public_path('assets/logo-dpmd-bangkalan.png'), 0.3, true)
-                            ->size(80)
-                            ->errorCorrection('H')
-                            ->generate($veriUrl)
+                        \App\Services\QrCodeService::png($veriUrl)
                     );
                 @endphp
                 <img src="data:image/png;base64,{!! $qrImageVeri !!}" alt="QR Verifikasi">

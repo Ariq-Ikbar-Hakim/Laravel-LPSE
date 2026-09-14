@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Paket;
+use App\Models\BeritaAcara;
 use App\Models\Lampiran;
+use App\Models\Paket;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Smalot\PdfParser\Parser;
 use Symfony\Component\Process\Process;
 
 class PaketController extends Controller
@@ -36,6 +39,7 @@ class PaketController extends Controller
     public function create()
     {
         $ppUsers = User::where('jabatan_aktif', 'PP')->where('status_aktif', 1)->get();
+
         return view('paket.create', compact('ppUsers'));
     }
 
@@ -46,39 +50,51 @@ class PaketController extends Controller
     {
         $request->validate([
             'pdf_sirup' => ['required', 'file', 'mimes:pdf', 'max:5120'],
-            'pp_id' => ['required', 'exists:users,id'],
+            'pp_id' => ['required', \Illuminate\Validation\Rule::exists('users', 'id')->where('jabatan_aktif', 'PP')->where('status_aktif', 1)],
         ]);
 
         try {
             $pdfPath = $request->file('pdf_sirup')->path();
-            $baseImagePath = storage_path('app/temp_sirup_' . time());
-            
-            // 1. Ekstrak PDF ke gambar menggunakan Ghostscript
-            $gsProcess = new Process(['gs', '-dSAFER', '-dBATCH', '-dNOPAUSE', '-r300', '-sDEVICE=png16m', '-sOutputFile=' . $baseImagePath . '_%d.png', $pdfPath]);
-            $gsProcess->run();
-
-            if (!$gsProcess->isSuccessful()) {
-                throw new \Exception('Gagal mengekstrak gambar dari PDF menggunakan Ghostscript.');
+            $baseImagePath = storage_path('app/temp_sirup_'.Str::uuid());
+            // PDF digital dapat dibaca langsung; OCR hanya untuk hasil scan.
+            try {
+                $text = (new Parser)->parseFile($pdfPath)->getText();
+            } catch (\Throwable $exception) {
+                $text = '';
             }
 
-            // 2. Lakukan OCR pada setiap halaman menggunakan Tesseract
-            $text = '';
-            $images = glob($baseImagePath . '_*.png');
-            
-            if (empty($images)) {
-                throw new \Exception('Tidak ada halaman yang dapat dibaca dari PDF.');
-            }
+            if (! preg_match('/Kode RUP[\s\t]+[0-9]+/i', $text)) {
 
-            foreach ($images as $img) {
-                $tesseract = new Process(['tesseract', $img, 'stdout', '-l', 'ind+eng']);
-                $tesseract->run();
-                $text .= $tesseract->getOutput() . "\n";
-                @unlink($img); // Bersihkan file temp
+                // 1. Ekstrak PDF ke gambar menggunakan Ghostscript
+                $gsProcess = new Process(['gs', '-dSAFER', '-dBATCH', '-dNOPAUSE', '-r300', '-sDEVICE=png16m', '-sOutputFile='.$baseImagePath.'_%d.png', $pdfPath]);
+                $gsProcess->run();
+
+                if (! $gsProcess->isSuccessful()) {
+                    throw new \Exception('Gagal mengekstrak gambar dari PDF menggunakan Ghostscript.');
+                }
+
+                // 2. Lakukan OCR pada setiap halaman menggunakan Tesseract
+                $text = '';
+                $images = glob($baseImagePath.'_*.png');
+
+                if (empty($images)) {
+                    throw new \Exception('Tidak ada halaman yang dapat dibaca dari PDF.');
+                }
+
+                foreach ($images as $img) {
+                    $tesseract = new Process(['tesseract', $img, 'stdout', '-l', 'ind+eng']);
+                    $tesseract->run();
+                    if (! $tesseract->isSuccessful()) {
+                        throw new \RuntimeException('OCR gagal membaca dokumen. Silakan gunakan PDF SIRUP asli.');
+                    }
+                    $text .= $tesseract->getOutput()."\n";
+                    @unlink($img); // Bersihkan file temp
+                }
             }
 
             // Hapus spasi berlebih tapi pertahankan newline/tab
             $text = preg_replace('/[ ]{2,}/', ' ', $text);
-            
+
             // Ekstrak Data
             $kode_rup = null;
             if (preg_match('/Kode RUP[\s\t]+([0-9]+)/i', $text, $matches)) {
@@ -88,6 +104,10 @@ class PaketController extends Controller
             $nama_paket = null;
             if (preg_match('/Nama Paket[\s\t]+([^\n]+)/i', $text, $matches)) {
                 $nama_paket = trim($matches[1]);
+            }
+
+            if (! $kode_rup || ! $nama_paket) {
+                throw new \RuntimeException('Kode RUP atau nama paket tidak terbaca. Unggah PDF detail paket SIRUP yang lengkap.');
             }
 
             $pagu = 0;
@@ -109,7 +129,7 @@ class PaketController extends Controller
             $sumber_dana = null;
             if (preg_match('/(APBD|APBN|BLUD)[\s\t]+\d{4}/i', $text, $matches)) {
                 $sumber_dana = strtoupper($matches[1]);
-            } else if (preg_match('/Sumber Dana[\s\S]{0,100}?(APBD|APBN|BLUD)/i', $text, $matches)) {
+            } elseif (preg_match('/Sumber Dana[\s\S]{0,100}?(APBD|APBN|BLUD)/i', $text, $matches)) {
                 $sumber_dana = strtoupper($matches[1]);
             }
 
@@ -123,21 +143,21 @@ class PaketController extends Controller
             if (preg_match('/Uraian Pekerjaan[\s\t]+([^\n]+)/i', $text, $matches)) {
                 $uraian_pekerjaan = trim($matches[1]);
             }
-            
+
             $spesifikasi_pekerjaan = null;
             if (preg_match('/Spesifikasi Pekerjaan[\s\t]+([^\n]+)/i', $text, $matches)) {
                 $spesifikasi_pekerjaan = trim($matches[1]);
             }
-            
+
             $jadwal_pelaksanaan = null;
             // Hanya cari "Pelaksanaan", lewati "Jadwal" dan "Kontrak" karena bisa terpotong ke baris lain atau ada typo "Jadwa l"
             if (preg_match('/Pelaksanaan[\s\S]{0,100}?([a-z]{3,}[\s\t]+\d{4})[\s\S]{1,50}?([a-z]{3,}[\s\t]+\d{4})/i', $text, $matches)) {
-                $jadwal_pelaksanaan = "Mulai " . trim($matches[1]) . " - Akhir " . trim($matches[2]);
+                $jadwal_pelaksanaan = 'Mulai '.trim($matches[1]).' - Akhir '.trim($matches[2]);
             }
-            
+
             $pemanfaatan = null;
             if (preg_match('/Pemanfaatan[\s\S]{0,100}?([a-z]{3,}[\s\t]+\d{4})[\s\S]{1,50}?([a-z]{3,}[\s\t]+\d{4})/i', $text, $matches)) {
-                $pemanfaatan = "Mulai " . trim($matches[1]) . " - Akhir " . trim($matches[2]);
+                $pemanfaatan = 'Mulai '.trim($matches[1]).' - Akhir '.trim($matches[2]);
             }
 
             $keterangan_tambahan = json_encode([
@@ -146,7 +166,7 @@ class PaketController extends Controller
                 'jadwal_pelaksanaan' => $jadwal_pelaksanaan,
                 'waktu_penggunaan' => $pemanfaatan,
                 'sumber_data' => 'Otomatis via OCR PDF SIRUP',
-                'raw_ocr_text' => substr($text, 0, 1000) // Simpan sedikit raw text untuk keperluan debugging jika diperlukan
+                'raw_ocr_text' => substr($text, 0, 1000), // Simpan sedikit raw text untuk keperluan debugging jika diperlukan
             ]);
 
             $paket = Paket::create([
@@ -181,7 +201,13 @@ class PaketController extends Controller
             return redirect()->route('paket.show', $paket)->with('success', 'Draft paket berhasil dibuat secara otomatis dari dokumen SIRUP. Silakan unggah dokumen persyaratan lainnya.');
 
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal memproses dokumen SIRUP: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal memproses dokumen SIRUP: '.$e->getMessage());
+        } finally {
+            if (isset($baseImagePath)) {
+                foreach (glob($baseImagePath.'_*.png') ?: [] as $image) {
+                    @unlink($image);
+                }
+            }
         }
     }
 
@@ -221,7 +247,7 @@ class PaketController extends Controller
             'tipe_dokumen' => ['required', 'string', 'max:100'],
         ], [
             'file_dokumen.mimes' => 'Format file tidak diizinkan. Hanya dokumen yang diperbolehkan (PDF, Word, Excel, PowerPoint, dll).',
-            'file_dokumen.max'   => 'Ukuran file melebihi batas maksimal 3 MB.',
+            'file_dokumen.max' => 'Ukuran file melebihi batas maksimal 3 MB.',
         ]);
 
         $file = $request->file('file_dokumen');
@@ -246,12 +272,12 @@ class PaketController extends Controller
                 ->where('status_validasi', 'revisi')
                 ->count();
 
-            $versionLabel = 'r' . $revisiCount;
+            $versionLabel = 'r'.$revisiCount;
         } else {
             $versionCount = Lampiran::where('paket_id', $paket->id)
                 ->where('tipe_dokumen', $request->tipe_dokumen)
                 ->count() + 1;
-            $versionLabel = 'v' . $versionCount;
+            $versionLabel = 'v'.$versionCount;
         }
 
         $originalNameWithoutExt = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
@@ -295,15 +321,15 @@ class PaketController extends Controller
                 ->where('tipe_dokumen', $tipe)
                 ->where('status_validasi', 'pending')
                 ->exists();
-            if (!$sudahDiunggah) {
+            if (! $sudahDiunggah) {
                 return redirect()->back()->with('error', "Anda wajib mengunggah dokumen revisi untuk {$tipe} sebelum mengirim paket ini.");
             }
         }
 
         // Cari PP secara acak untuk ditugaskan jika belum ada
-        if (!$paket->pp_id) {
+        if (! $paket->pp_id) {
             $pp = User::where('jabatan_aktif', 'PP')->where('status_aktif', 1)->inRandomOrder()->first();
-            if (!$pp) {
+            if (! $pp) {
                 return redirect()->back()->with('error', 'Tidak ada Pejabat Pengadaan (PP) aktif dalam sistem. Silakan hubungi Admin.');
             }
             $paket->pp_id = $pp->id;
@@ -339,7 +365,7 @@ class PaketController extends Controller
     public function beritaAcaraIndex(Request $request)
     {
         $user = Auth::user();
-        $query = \App\Models\BeritaAcara::with('paket.ppk');
+        $query = BeritaAcara::with('paket.ppk');
 
         if ($user->jabatan_aktif === 'PPK') {
             $query->whereHas('paket', function ($q) use ($user) {
@@ -354,19 +380,19 @@ class PaketController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('nomor_ba', 'like', '%' . $search . '%')
-                  ->orWhereHas('paket', function ($pq) use ($search) {
-                      $pq->where('nama_paket', 'like', '%' . $search . '%');
-                  });
+                $q->where('nomor_ba', 'like', '%'.$search.'%')
+                    ->orWhereHas('paket', function ($pq) use ($search) {
+                        $pq->where('nama_paket', 'like', '%'.$search.'%');
+                    });
             });
         }
 
         $beritaAcara = $query->latest()->paginate(15);
-        $ppkUsers = \App\Models\User::where('jabatan_aktif', 'PPK')->where('status_aktif', 1)->orderBy('nama')->get();
-        
+        $ppkUsers = User::where('jabatan_aktif', 'PPK')->where('status_aktif', 1)->orderBy('nama')->get();
+
         $availablePaket = collect();
         if ($user->jabatan_aktif === 'PP') {
-            $availablePaket = \App\Models\Paket::where('pp_id', $user->id)
+            $availablePaket = Paket::where('pp_id', $user->id)
                 ->whereDoesntHave('beritaAcara')
                 ->whereIn('status', ['dikirim', 'disetujui', 'proses_ba', 'perlu_revisi'])
                 ->orderBy('nama_paket')

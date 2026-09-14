@@ -3,3 +3,10 @@ node_modules
 .git
 .env
 storage/logs
+storage/framework
+storage/app
+bootstrap/cache/*.php
+public/hot
+public/storage
+.env.*
+database/*.sqlite*

@@ -6,10 +6,10 @@ use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\View\View;
-
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
@@ -29,23 +29,11 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $user = $request->user();
-        
-        \Illuminate\Support\Facades\Log::info('Profile Update Request received', [
-            'all_inputs' => $request->all(),
-            'has_file' => $request->hasFile('foto_profil'),
-            'file_details' => $request->file('foto_profil') ? [
-                'name' => $request->file('foto_profil')->getClientOriginalName(),
-                'size' => $request->file('foto_profil')->getSize(),
-                'mime' => $request->file('foto_profil')->getMimeType(),
-                'is_valid' => $request->file('foto_profil')->isValid(),
-                'error' => $request->file('foto_profil')->getError(),
-            ] : 'No file',
-        ]);
-        
+
         $validated = $request->validated();
         // Hapus foto_profil dari data validated agar tidak menimpa foto profil lama dengan null
         unset($validated['foto_profil']);
-        
+
         $user->fill($validated);
 
         if ($request->input('remove_photo') == 1) {
@@ -61,7 +49,7 @@ class ProfileController extends Controller
             }
             $path = $request->file('foto_profil')->store('avatars', 'public');
             $user->foto_profil = $path;
-            \Illuminate\Support\Facades\Log::info('Profile Photo Stored successfully', ['path' => $path]);
+            Log::info('Profile Photo Stored successfully', ['path' => $path]);
         }
 
         $user->save();
@@ -106,7 +94,7 @@ class ProfileController extends Controller
     public function storeRequestReset(Request $request): RedirectResponse
     {
         $user = $request->user();
-        
+
         $user->update([
             'reset_requested_at' => now(),
         ]);

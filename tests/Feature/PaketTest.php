@@ -1,27 +1,26 @@
 <?php
 
-use App\Models\User;
-use App\Models\Paket;
 use App\Models\Lampiran;
-use App\Models\LogPaket;
+use App\Models\Paket;
+use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 test('PPK can create draft paket', function () {
+    Storage::fake('public');
     $ppk = User::factory()->create(['jabatan_aktif' => 'PPK', 'status_aktif' => 1]);
     $pp = User::factory()->create(['jabatan_aktif' => 'PP', 'status_aktif' => 1]);
 
     $response = $this->actingAs($ppk)->post(route('paket.store'), [
-        'kode_rup' => 'RUP-12345',
-        'nama_paket' => 'Pengadaan Laptop Kantor',
-        'pagu' => 150000000.00,
-        'tahun_anggaran' => '2026',
+        'pdf_sirup' => UploadedFile::fake()->createWithContent('sirup.pdf',
+            Pdf::loadHTML('<p>Kode RUP 12345</p><p>Nama Paket Pengadaan Laptop Kantor</p><p>Total Pagu Rp. 150.000.000</p><p>Tahun Anggaran 2026</p>')->output()),
         'pp_id' => $pp->id,
     ]);
 
     $response->assertRedirect();
     $this->assertDatabaseHas('paket', [
-        'kode_rup' => 'RUP-12345',
+        'kode_rup' => '12345',
         'nama_paket' => 'Pengadaan Laptop Kantor',
         'status' => 'draft',
         'ppk_id' => $ppk->id,
@@ -29,7 +28,7 @@ test('PPK can create draft paket', function () {
     ]);
 
     // Check log_paket observer
-    $paket = Paket::where('kode_rup', 'RUP-12345')->first();
+    $paket = Paket::where('kode_rup', '12345')->first();
     $this->assertDatabaseHas('log_paket', [
         'paket_id' => $paket->id,
         'aksi' => 'DRAFT',
@@ -58,7 +57,7 @@ test('PPK can upload lampiran and name formatting versioning works', function ()
 
     // Verify versioning name
     // Format: paket_{id}_{timestamp}_rev{versi}.{ekstensi}
-    $pattern = '/^lampiran\/' . $paket->id . '\/paket_' . $paket->id . '_\d+_rev1\.pdf$/';
+    $pattern = '/^lampiran\/'.$paket->id.'\/paket_'.$paket->id.'_\d+_rev1\.pdf$/';
     $this->assertMatchesRegularExpression($pattern, $lampiran->file_path);
     Storage::disk('public')->assertExists($lampiran->file_path);
 });
@@ -85,11 +84,11 @@ test('PP cannot access draft paket', function () {
 test('PP can review document and approve or reject it', function () {
     $ppk = User::factory()->create(['jabatan_aktif' => 'PPK', 'status_aktif' => 1]);
     $pp = User::factory()->create(['jabatan_aktif' => 'PP', 'status_aktif' => 1]);
-    
+
     $paket = Paket::factory()->create([
-        'ppk_id' => $ppk->id, 
-        'pp_id' => $pp->id, 
-        'status' => 'dikirim'
+        'ppk_id' => $ppk->id,
+        'pp_id' => $pp->id,
+        'status' => 'dikirim',
     ]);
 
     $lampiran = Lampiran::create([
@@ -146,21 +145,24 @@ test('admin viewing detail paket marks dilihat_admin_at receipt', function () {
 
 test('PP bypass creates approved APBD Goods Services package', function () {
     $pp = User::factory()->create(['jabatan_aktif' => 'PP', 'status_aktif' => 1]);
+    $ppk = User::factory()->create(['jabatan_aktif' => 'PPK', 'status_aktif' => 1]);
 
     $response = $this->actingAs($pp)->post(route('paket-bypass.store'), [
         'kode_rup' => 'RUP-BYPASS',
+        'ppk_id' => $ppk->id,
         'nama_paket' => 'Bypass Manual PP',
         'pagu' => 50000000.00,
     ]);
 
     $response->assertRedirect();
-    
+
     $paket = Paket::where('kode_rup', 'RUP-BYPASS')->first();
     $this->assertNotNull($paket);
-    $this->assertNull($paket->ppk_id);
+    $this->assertEquals($ppk->id, $paket->ppk_id);
     $this->assertEquals($pp->id, $paket->pp_id);
     $this->assertEquals('disetujui', $paket->status);
     $this->assertEquals('Manual (Dibuat PP)', $paket->metode);
     $this->assertEquals('APBD', $paket->sumber_dana);
     $this->assertEquals('Barang/Jasa', $paket->jenis);
+    $this->assertDatabaseHas('berita_acara', ['paket_id' => $paket->id, 'status' => 'draft']);
 });

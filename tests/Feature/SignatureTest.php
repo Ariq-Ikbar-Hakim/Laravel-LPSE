@@ -1,21 +1,23 @@
 <?php
 
-use App\Models\User;
-use App\Models\Paket;
-use App\Models\Lampiran;
 use App\Models\BeritaAcara;
-use App\Models\Signature;
+use App\Models\Lampiran;
+use App\Models\Paket;
+use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 test('Berita Acara auto generated when package is approved', function () {
     $ppk = User::factory()->create(['jabatan_aktif' => 'PPK', 'status_aktif' => 1]);
-    $paket = Paket::factory()->create(['ppk_id' => $ppk->id, 'status' => 'draft']);
+    $paket = Paket::factory()->create(['ppk_id' => $ppk->id, 'status' => 'dikirim']);
 
     $this->assertDatabaseMissing('berita_acara', ['paket_id' => $paket->id]);
 
     // Set to disetujui
-    $paket->update(['status' => 'disetujui']);
+    $pp = $paket->pp ?? User::factory()->create(['jabatan_aktif' => 'PP', 'status_aktif' => 1]);
+    $paket->update(['pp_id' => $pp->id]);
+    $this->actingAs($pp)->post(route('paket-review.update-status', $paket), ['status' => 'disetujui'])->assertRedirect();
+    $this->flushSession();
 
     $this->assertDatabaseHas('berita_acara', [
         'paket_id' => $paket->id,
@@ -27,15 +29,18 @@ test('PP can sign first and PPK is blocked before PP signs', function () {
     Storage::fake('public');
     $ppk = User::factory()->create(['jabatan_aktif' => 'PPK', 'status_aktif' => 1]);
     $pp = User::factory()->create(['jabatan_aktif' => 'PP', 'status_aktif' => 1]);
-    $paket = Paket::factory()->create(['ppk_id' => $ppk->id, 'pp_id' => $pp->id, 'status' => 'draft']);
-    $paket->update(['status' => 'disetujui']);
+    $paket = Paket::factory()->create(['ppk_id' => $ppk->id, 'pp_id' => $pp->id, 'status' => 'dikirim']);
+    $pp = $paket->pp ?? User::factory()->create(['jabatan_aktif' => 'PP', 'status_aktif' => 1]);
+    $paket->update(['pp_id' => $pp->id]);
+    $this->actingAs($pp)->post(route('paket-review.update-status', $paket), ['status' => 'disetujui'])->assertRedirect();
+    $this->flushSession();
 
     $ba = BeritaAcara::where('paket_id', $paket->id)->first();
     $this->assertNotNull($ba);
 
     // PPK tries to sign before PP -> Expect Forbidden (403)
     $response = $this->actingAs($ppk)->post(route('berita-acara.sign', $ba), [
-        'signature_image' => UploadedFile::fake()->image('sig.png')
+        'signature_image' => UploadedFile::fake()->image('sig.png'),
     ]);
     $response->assertStatus(403);
     $this->assertFalse($ba->hasSignatureFrom('PPK'));
@@ -43,7 +48,7 @@ test('PP can sign first and PPK is blocked before PP signs', function () {
     // PP signs -> Success
     $this->flushSession();
     $response = $this->actingAs($pp)->post(route('berita-acara.sign', $ba), [
-        'signature_image' => UploadedFile::fake()->image('sig.png')
+        'signature_image' => UploadedFile::fake()->image('sig.png'),
     ]);
     $response->assertRedirect();
     $this->assertTrue($ba->fresh()->hasSignatureFrom('PP'));
@@ -59,22 +64,25 @@ test('PPK is blocked on bypass package signature if no approved lampirans', func
     $paket = Paket::factory()->create([
         'ppk_id' => null,
         'pp_id' => $pp->id,
-        'status' => 'draft',
+        'status' => 'dikirim',
     ]);
-    $paket->update(['status' => 'disetujui']);
+    $pp = $paket->pp ?? User::factory()->create(['jabatan_aktif' => 'PP', 'status_aktif' => 1]);
+    $paket->update(['pp_id' => $pp->id]);
+    $this->actingAs($pp)->post(route('paket-review.update-status', $paket), ['status' => 'disetujui'])->assertRedirect();
+    $this->flushSession();
 
     $ba = BeritaAcara::where('paket_id', $paket->id)->first();
 
     // PP signs first
     $this->actingAs($pp)->post(route('berita-acara.sign', $ba), [
-        'signature_image' => UploadedFile::fake()->image('sig.png')
+        'signature_image' => UploadedFile::fake()->image('sig.png'),
     ]);
     $this->assertEquals('tanda_tangan_pertama', $ba->fresh()->status);
 
     // PPK tries to sign -> Expect Forbidden (403) since no lampiran is approved
     $this->flushSession();
     $response = $this->actingAs($ppk)->post(route('berita-acara.sign', $ba), [
-        'signature_image' => UploadedFile::fake()->image('sig.png')
+        'signature_image' => UploadedFile::fake()->image('sig.png'),
     ]);
     $response->assertStatus(403);
 
@@ -91,31 +99,34 @@ test('PPK is blocked on bypass package signature if no approved lampirans', func
     // PPK signs now -> Success
     $this->flushSession();
     $response = $this->actingAs($ppk)->post(route('berita-acara.sign', $ba), [
-        'signature_image' => UploadedFile::fake()->image('sig.png')
+        'signature_image' => UploadedFile::fake()->image('sig.png'),
     ]);
     $response->assertRedirect();
     $this->assertEquals('selesai', $ba->fresh()->status);
     $this->assertEquals('selesai', $paket->fresh()->status);
 });
 
-test('Both signatures complete finalizes BA, calculates SHA256 and saves QR Code', function () {
+test('Both signatures finalize BA and save a PDF with matching SHA256', function () {
     Storage::fake('public');
     $ppk = User::factory()->create(['jabatan_aktif' => 'PPK', 'status_aktif' => 1]);
     $pp = User::factory()->create(['jabatan_aktif' => 'PP', 'status_aktif' => 1]);
-    $paket = Paket::factory()->create(['ppk_id' => $ppk->id, 'pp_id' => $pp->id, 'status' => 'draft']);
-    $paket->update(['status' => 'disetujui']);
+    $paket = Paket::factory()->create(['ppk_id' => $ppk->id, 'pp_id' => $pp->id, 'status' => 'dikirim']);
+    $pp = $paket->pp ?? User::factory()->create(['jabatan_aktif' => 'PP', 'status_aktif' => 1]);
+    $paket->update(['pp_id' => $pp->id]);
+    $this->actingAs($pp)->post(route('paket-review.update-status', $paket), ['status' => 'disetujui'])->assertRedirect();
+    $this->flushSession();
 
     $ba = BeritaAcara::where('paket_id', $paket->id)->first();
 
     // 1. PP signs
     $this->actingAs($pp)->post(route('berita-acara.sign', $ba), [
-        'signature_image' => UploadedFile::fake()->image('sig.png')
+        'signature_image' => UploadedFile::fake()->image('sig.png'),
     ]);
 
     // 2. PPK signs
     $this->flushSession();
     $response = $this->actingAs($ppk)->post(route('berita-acara.sign', $ba), [
-        'signature_image' => UploadedFile::fake()->image('sig.png')
+        'signature_image' => UploadedFile::fake()->image('sig.png'),
     ]);
     $response->assertSessionHasNoErrors();
 
@@ -126,10 +137,11 @@ test('Both signatures complete finalizes BA, calculates SHA256 and saves QR Code
     // Verify PDF and QR Code generation
     $this->assertNotNull($ba->file_laporan);
     Storage::disk('public')->assertExists($ba->file_laporan);
-    
+
     $signaturePpk = $ba->ppkSignature();
-    $this->assertNotNull($signaturePpk->qr_code_path);
-    Storage::disk('public')->assertExists($signaturePpk->qr_code_path);
+    $pdfContent = Storage::disk('public')->get($ba->file_laporan);
+    expect($pdfContent)->toStartWith('%PDF-');
+    expect($signaturePpk->hash_dokumen)->toBe(hash('sha256', $pdfContent));
 
     // Check hash exists in signatures
     $this->assertNotNull($signaturePpk->hash_dokumen);
@@ -140,18 +152,21 @@ test('Rollback status to perlu_revisi deletes signatures and resets BA', functio
     Storage::fake('public');
     $ppk = User::factory()->create(['jabatan_aktif' => 'PPK', 'status_aktif' => 1]);
     $pp = User::factory()->create(['jabatan_aktif' => 'PP', 'status_aktif' => 1]);
-    $paket = Paket::factory()->create(['ppk_id' => $ppk->id, 'pp_id' => $pp->id, 'status' => 'draft']);
-    $paket->update(['status' => 'disetujui']);
+    $paket = Paket::factory()->create(['ppk_id' => $ppk->id, 'pp_id' => $pp->id, 'status' => 'dikirim']);
+    $pp = $paket->pp ?? User::factory()->create(['jabatan_aktif' => 'PP', 'status_aktif' => 1]);
+    $paket->update(['pp_id' => $pp->id]);
+    $this->actingAs($pp)->post(route('paket-review.update-status', $paket), ['status' => 'disetujui'])->assertRedirect();
+    $this->flushSession();
 
     $ba = BeritaAcara::where('paket_id', $paket->id)->first();
 
     // Both sign
     $this->actingAs($pp)->post(route('berita-acara.sign', $ba), [
-        'signature_image' => UploadedFile::fake()->image('sig.png')
+        'signature_image' => UploadedFile::fake()->image('sig.png'),
     ]);
     $this->flushSession();
     $this->actingAs($ppk)->post(route('berita-acara.sign', $ba), [
-        'signature_image' => UploadedFile::fake()->image('sig.png')
+        'signature_image' => UploadedFile::fake()->image('sig.png'),
     ]);
 
     $this->assertEquals(2, $ba->signatures()->count());
@@ -170,18 +185,21 @@ test('Public verification details page and PDF upload validator work', function 
     Storage::fake('public');
     $ppk = User::factory()->create(['jabatan_aktif' => 'PPK', 'status_aktif' => 1]);
     $pp = User::factory()->create(['jabatan_aktif' => 'PP', 'status_aktif' => 1]);
-    $paket = Paket::factory()->create(['ppk_id' => $ppk->id, 'pp_id' => $pp->id, 'status' => 'draft']);
-    $paket->update(['status' => 'disetujui']);
+    $paket = Paket::factory()->create(['ppk_id' => $ppk->id, 'pp_id' => $pp->id, 'status' => 'dikirim']);
+    $pp = $paket->pp ?? User::factory()->create(['jabatan_aktif' => 'PP', 'status_aktif' => 1]);
+    $paket->update(['pp_id' => $pp->id]);
+    $this->actingAs($pp)->post(route('paket-review.update-status', $paket), ['status' => 'disetujui'])->assertRedirect();
+    $this->flushSession();
 
     $ba = BeritaAcara::where('paket_id', $paket->id)->first();
-    
+
     // Both sign to finalize BA
     $this->actingAs($pp)->post(route('berita-acara.sign', $ba), [
-        'signature_image' => UploadedFile::fake()->image('sig.png')
+        'signature_image' => UploadedFile::fake()->image('sig.png'),
     ]);
     $this->flushSession();
     $this->actingAs($ppk)->post(route('berita-acara.sign', $ba), [
-        'signature_image' => UploadedFile::fake()->image('sig.png')
+        'signature_image' => UploadedFile::fake()->image('sig.png'),
     ]);
     $ba = $ba->fresh();
 
