@@ -25,7 +25,14 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true \
 COPY . .
 
 # Instal dependensi Laravel
-RUN composer install --no-dev --optimize-autoloader
+# Railway occasionally returns transient GitHub 504 responses while Composer
+# downloads packages. Limit parallel downloads and retry the complete install.
+RUN for attempt in 1 2 3; do \
+        COMPOSER_MAX_PARALLEL_HTTP=1 composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader && exit 0; \
+        echo "Composer install attempt ${attempt} failed; retrying..."; \
+        sleep 5; \
+    done; \
+    exit 1
 
 # Instal dependensi Node.js dan build Vite assets
 RUN npm ci && npm run build
