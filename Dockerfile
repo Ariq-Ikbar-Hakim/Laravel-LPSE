@@ -44,4 +44,4 @@ RUN mkdir -p storage/app/public storage/logs storage/framework/cache/data storag
 RUN printf 'upload_max_filesize=20M\npost_max_size=22M\n' > /usr/local/etc/php/conf.d/uploads.ini
 
 # Gunakan format shell agar variabel $PORT terbaca sempurna
-CMD sh -c 'php artisan migrate --force && php artisan storage:link --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}'
+CMD sh -c 'mkdir -p "${FILESYSTEM_PUBLIC_ROOT:-storage/app/public}" && php artisan migrate --force && php artisan storage:link --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}'
