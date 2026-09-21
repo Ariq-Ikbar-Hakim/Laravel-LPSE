@@ -9,6 +9,7 @@ use App\Models\AssignmentTransfer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -80,7 +81,7 @@ class AssignmentTransferController extends Controller
         ]);
 
         // Simpan pengajuan swap jabatan
-        AssignmentTransfer::create([
+        $transfer = AssignmentTransfer::create([
             'paket_id' => null, // NULL untuk swap jabatan & seluruh paket
             'dari_user_id' => $user->id,
             'ke_user_id' => $request->ke_user_id,
@@ -89,7 +90,9 @@ class AssignmentTransferController extends Controller
             'alasan' => $request->alasan,
         ]);
 
-        return redirect()->route('dashboard')->with('success', 'Pengajuan swap jabatan berhasil dikirim. Menunggu persetujuan Admin.');
+        Mail::to($user->email)->send(new \App\Mail\AssignmentTransferNotification($transfer->load('dariUser'), 'submitted'));
+
+        return redirect()->route('dashboard')->with('success', 'Pengajuan transfer jabatan dan paket berhasil dikirim. Menunggu persetujuan Admin.');
     }
 
     /**
@@ -225,7 +228,10 @@ class AssignmentTransferController extends Controller
             }
         });
 
-        return redirect()->back()->with('success', 'Pengajuan swap jabatan berhasil disetujui. Peran dan seluruh paket tugas telah ditukar.');
+        $transfer->load('dariUser');
+        Mail::to($transfer->dariUser->email)->send(new \App\Mail\AssignmentTransferNotification($transfer, 'updated'));
+
+        return redirect()->back()->with('success', 'Transfer jabatan dan seluruh paket tugas berhasil disetujui.');
     }
 
     /**
@@ -247,6 +253,9 @@ class AssignmentTransferController extends Controller
             'disetujui_oleh' => Auth::id(),
         ]);
 
-        return redirect()->back()->with('success', 'Pengajuan swap jabatan telah ditolak.');
+        $transfer->load('dariUser');
+        Mail::to($transfer->dariUser->email)->send(new \App\Mail\AssignmentTransferNotification($transfer, 'updated'));
+
+        return redirect()->back()->with('success', 'Pengajuan transfer jabatan dan paket telah ditolak.');
     }
 }

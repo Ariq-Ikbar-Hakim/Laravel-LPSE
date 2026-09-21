@@ -49,7 +49,7 @@
                         Sistem Informasi Pengadaan Barang & Jasa
                     </h1>
                     <p class="text-slate-500 text-xs leading-relaxed font-semibold">
-                        Selamat datang kembali! Kelola berkas tender dan mutasi paket pengadaan DPMD Kabupaten Bangkalan secara efisien, transparan, dan terintegrasi.
+                        Selamat datang kembali di BANGEDI PBJ (Bangkalan Elektronik Digitalisasi Pengadaan Barang dan Jasa). Kelola berkas tender dan transfer jabatan serta paket secara efisien, transparan, dan terintegrasi.
                     </p>
                 </div>
 

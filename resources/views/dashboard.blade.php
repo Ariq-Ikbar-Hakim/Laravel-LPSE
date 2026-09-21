@@ -88,10 +88,10 @@
                 </div>
             </div>
 
-            {{-- Card 4: Total Mutasi --}}
+            {{-- Card 4: Total Transfer --}}
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col justify-between hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition">
                 <div class="flex justify-between items-center">
-                    <span class="text-slate-500 dark:text-slate-400 text-sm font-medium">Total Mutasi</span>
+                    <span class="text-slate-500 dark:text-slate-400 text-sm font-medium">Total Transfer</span>
                     <div class="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-500 dark:text-emerald-400 flex items-center justify-center">
                         <i class="fa-solid fa-shuffle text-xs"></i>
                     </div>
@@ -188,7 +188,7 @@
                 </a>
             </div>
 
-            {{-- Card: Mutasi / Transfer Tugas --}}
+            {{-- Card: Transfer Jabatan dan Paket --}}
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex items-center justify-between group hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition">
                 <div class="space-y-2">
                     <div class="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
@@ -196,7 +196,7 @@
                     </div>
                     <h2 class="text-4xl font-extrabold text-slate-900 dark:text-white">
                         {{ $data['total_transfers'] ?? 0 }}
-                        <span class="text-lg font-medium text-slate-500 dark:text-slate-400">mutasi</span>
+                        <span class="text-lg font-medium text-slate-500 dark:text-slate-400">transfer</span>
                     </h2>
                     <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Total riwayat pengajuan transfer tugas paket.</p>
                 </div>
@@ -260,7 +260,7 @@
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden">
             <div class="p-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
                 <div>
-                    <h3 class="font-bold text-slate-900 dark:text-white text-base">Riwayat Mutasi Tugas Terkini</h3>
+                    <h3 class="font-bold text-slate-900 dark:text-white text-base">Riwayat Transfer Jabatan dan Paket</h3>
                     <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Log transfer kepemilikan paket yang paling baru</p>
                 </div>
                 <a href="{{ route('admin.transfers.index') }}" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Kelola Semua →</a>

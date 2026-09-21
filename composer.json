@@ -11,6 +11,7 @@
         "endroid/qr-code": "^5.0",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^3.0",
+        "resend/resend-php": "^1.15",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "smalot/pdfparser": "^2.12",
         "spatie/browsershot": "^5.4",

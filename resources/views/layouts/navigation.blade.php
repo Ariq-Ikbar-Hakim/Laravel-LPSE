@@ -165,9 +165,9 @@
                    class="h-11 rounded-xl flex items-center transition hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200
                           {{ request()->routeIs('admin.transfers.*') ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}"
                    :class="sidebarOpen ? 'w-full px-4 gap-3 justify-start' : 'w-11 justify-center'"
-                   title="Mutasi Paket">
+                   title="Transfer Jabatan dan Paket">
                     <i class="fa-solid fa-right-left text-lg shrink-0"></i>
-                    <span class="text-sm font-semibold whitespace-nowrap overflow-hidden" x-show="sidebarOpen" x-transition>Mutasi Paket</span>
+                    <span class="text-sm font-semibold whitespace-nowrap overflow-hidden" x-show="sidebarOpen" x-transition>Transfer Jabatan dan Paket</span>
                 </a>
             @endif
 
@@ -230,7 +230,7 @@
         <a href="{{ route('admin.transfers.index') }}"
            class="flex flex-col items-center justify-center gap-0.5 px-3 {{ request()->routeIs('admin.transfers.*') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}">
             <i class="fa-solid fa-right-left text-lg"></i>
-            <span class="text-[9px] font-semibold font-jakarta">Mutasi</span>
+            <span class="text-[9px] font-semibold font-jakarta">Transfer</span>
         </a>
     @endif
 

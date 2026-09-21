@@ -40,9 +40,7 @@ return [
 
         'public' => [
             'driver' => 'local',
-            // Railway Volume path can be supplied through the environment.
-            // Local development keeps using Laravel's normal storage folder.
-            'root' => env('FILESYSTEM_PUBLIC_ROOT', storage_path('app/public')),
+            'root' => storage_path('app/public'),
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
             'visibility' => 'public',
             'throw' => false,

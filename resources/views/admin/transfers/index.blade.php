@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Manajemen Mutasi & Transfer Tugas Paket') }}
+            {{ __('Transfer Jabatan dan Paket') }}
         </h2>
     </x-slot>
 
@@ -22,7 +22,7 @@
 
             <div class="p-6 bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 border-b pb-2">
-                    {{ __('Daftar Pengajuan Mutasi / Swap Jabatan & Paket') }}
+                    {{ __('Daftar Pengajuan Transfer Jabatan dan Paket') }}
                 </h3>
 
                 @if($transfers->isEmpty())
