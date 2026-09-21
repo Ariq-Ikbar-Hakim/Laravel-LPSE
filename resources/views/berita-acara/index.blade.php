@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="py-8 px-4 md:px-8 font-jakarta bg-slate-100 dark:bg-slate-955 min-h-screen text-slate-850 dark:text-slate-100 transition-colors duration-300">
+    <div class="py-8 px-4 md:px-8 font-jakarta bg-slate-100 dark:bg-slate-950 min-h-screen text-slate-800 dark:text-slate-100 transition-colors duration-300">
         <div class="max-w-7xl mx-auto space-y-6">
             
             <!-- Header Title -->
@@ -52,7 +52,7 @@
                             <i class="fa-solid fa-magnifying-glass text-xs"></i>
                         </span>
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nomor berita acara..." 
-                               class="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-955 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                               class="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                     </div>
                     <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition cursor-pointer">
                         Cari
@@ -94,7 +94,7 @@
                                             <a href="{{ route('paket.show', $ba->paket_id) }}" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
                                                 {{ $ba->paket->nama_paket ?? '-' }}
                                             </a>
-                                            <div class="text-[10px] text-slate-400 mt-0.5">RUP: {{ $ba->paket->kode_rup ?? '-' }} @if($ba->paket->metode === 'Manual') <span class="px-1.5 py-0.5 bg-slate-150 dark:bg-slate-800 text-slate-500 rounded text-[8px] font-bold uppercase ml-1">Manual</span> @else <span class="px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-500 rounded text-[8px] font-bold uppercase ml-1">Semi-Otomatis</span> @endif</div>
+                                            <div class="text-[10px] text-slate-400 mt-0.5">RUP: {{ $ba->paket->kode_rup ?? '-' }} @if($ba->paket->metode === 'Manual') <span class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded text-[8px] font-bold uppercase ml-1">Manual</span> @else <span class="px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-500 rounded text-[8px] font-bold uppercase ml-1">Semi-Otomatis</span> @endif</div>
                                         </td>
                                         <td class="p-4 text-xs text-slate-500 dark:text-slate-400">
                                             {{ $ba->tanggal_ba ? $ba->tanggal_ba->format('d M Y') : ($ba->created_at ? $ba->created_at->format('d M Y') : '-') }}
@@ -109,7 +109,7 @@
                                                     'tanda_tangan_pertama'  => 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400',
                                                     'tanda_tangan_kedua',
                                                     'selesai'               => 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400',
-                                                    default                 => 'bg-slate-100 dark:bg-slate-850 text-slate-600 dark:text-slate-400',
+                                                    default                 => 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
                                                 };
                                             @endphp
                                             <span class="px-2.5 py-1 rounded-full text-xs font-semibold {{ $cls }}">{{ strtoupper($ba->status) }}</span>
@@ -117,7 +117,7 @@
                                         <td class="p-4 pr-6 text-center">
                                             <div class="flex items-center justify-center gap-2">
                                                 @if($ba->file_laporan)
-                                                    <a href="{{ asset('storage/' . $ba->file_laporan) }}" target="_blank" class="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-900 dark:bg-slate-850 text-white rounded-xl text-xs font-semibold hover:bg-indigo-600 transition">
+                                                    <a href="{{ asset('storage/' . $ba->file_laporan) }}" target="_blank" class="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-900 dark:bg-slate-800 text-white rounded-xl text-xs font-semibold hover:bg-indigo-600 transition">
                                                         <i class="fa-solid fa-file-pdf"></i> PDF
                                                     </a>
                                                 @else
@@ -224,7 +224,7 @@
                 <!-- Pilih PPK -->
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Pilih PPK (Pengusul Paket)</label>
-                    <select id="create_ppk_id" name="ppk_id" required class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-955 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                    <select id="create_ppk_id" name="ppk_id" required class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                         <option value="">-- Pilih PPK --</option>
                         @foreach($ppkUsers as $ppk)
                             <option value="{{ $ppk->id }}">{{ $ppk->nama }} (NIP: {{ $ppk->nip }})</option>
@@ -235,18 +235,18 @@
                 <!-- Nama Paket -->
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Nama Paket Pekerjaan</label>
-                    <input type="text" id="create_nama_paket" name="nama_paket" required placeholder="Contoh: Pengadaan Laptop Dinas Tahun 2026" class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-955 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="create_nama_paket" name="nama_paket" required placeholder="Contoh: Pengadaan Laptop Dinas Tahun 2026" class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <!-- Kode RUP & Tahun Anggaran -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Kode RUP</label>
-                        <input type="text" id="create_kode_rup" name="kode_rup" required placeholder="Bebas" class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-955 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                        <input type="text" id="create_kode_rup" name="kode_rup" required placeholder="Bebas" class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Tahun Anggaran</label>
-                        <input type="text" id="create_tahun_anggaran" name="tahun_anggaran" required value="2026" class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-955 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                        <input type="text" id="create_tahun_anggaran" name="tahun_anggaran" required value="2026" class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                     </div>
                 </div>
 
@@ -254,28 +254,28 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Pagu (Rp)</label>
-                        <input type="number" id="create_pagu" name="pagu" required placeholder="150.000.000" class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-955 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                        <input type="number" id="create_pagu" name="pagu" required placeholder="150.000.000" class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">HPS (Rp)</label>
-                        <input type="number" id="create_hps" name="hps" required placeholder="0" class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-955 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                        <input type="number" id="create_hps" name="hps" required placeholder="0" class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                     </div>
                 </div>
 
                 <!-- Nomor BA -->
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Nomor Berita Acara</label>
-                    <input type="text" id="create_nomor_ba" name="nomor_ba" required placeholder="Contoh: BA/12/LPSE/2026" class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-955 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="create_nomor_ba" name="nomor_ba" required placeholder="Contoh: BA/12/LPSE/2026" class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <!-- Tanggal BA -->
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Tanggal Berita Acara</label>
-                    <input type="date" id="create_tanggal_ba" name="tanggal_ba" required class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-955 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                    <input type="date" id="create_tanggal_ba" name="tanggal_ba" required class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <!-- Unggah TTD PP -->
-                <div class="p-4 bg-slate-55 dark:bg-slate-800/40 border border-indigo-100 dark:border-slate-800 rounded-2xl space-y-2">
+                <div class="p-4 bg-slate-50 dark:bg-slate-800/40 border border-indigo-100 dark:border-slate-800 rounded-2xl space-y-2">
                     <label class="block text-xs font-bold text-indigo-900 dark:text-indigo-400 uppercase">Unggah Tanda Tangan Anda (PP)</label>
                     <input type="file" name="signature_image" required accept="image/png, image/jpeg, image/jpg" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-slate-800 dark:file:text-white" />
                     <p class="text-[10px] text-slate-400">Format PNG/JPG.</p>
@@ -283,7 +283,7 @@
 
                 <!-- Action Buttons -->
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" onclick="closeCreateModal()" class="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-655 dark:text-slate-300 rounded-xl text-sm font-semibold transition">
+                    <button type="button" onclick="closeCreateModal()" class="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold transition">
                         Batal
                     </button>
                     <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition shadow-sm">
@@ -324,19 +324,19 @@
                 <!-- Nama Paket -->
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Nama Paket Pekerjaan</label>
-                    <input type="text" id="edit_nama_paket" name="nama_paket" required class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-955 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="edit_nama_paket" name="nama_paket" required class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <!-- Kode RUP & Tahun Anggaran -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Kode RUP</label>
-                        <input type="text" id="edit_kode_rup" name="edit_kode_rup" readonly class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-955 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500 cursor-not-allowed">
+                        <input type="text" id="edit_kode_rup" name="edit_kode_rup" readonly class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500 cursor-not-allowed">
                         <input type="hidden" id="edit_kode_rup_hidden" name="kode_rup">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Tahun Anggaran</label>
-                        <input type="text" id="edit_tahun_anggaran" name="tahun_anggaran" required class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-955 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                        <input type="text" id="edit_tahun_anggaran" name="tahun_anggaran" required class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                     </div>
                 </div>
 
@@ -344,28 +344,28 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Pagu (Rp)</label>
-                        <input type="number" id="edit_pagu" name="pagu" required class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-955 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                        <input type="number" id="edit_pagu" name="pagu" required class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">HPS (Rp)</label>
-                        <input type="number" id="edit_hps" name="hps" required class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-955 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                        <input type="number" id="edit_hps" name="hps" required class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                     </div>
                 </div>
 
                 <!-- Nomor BA -->
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Nomor Berita Acara</label>
-                    <input type="text" id="edit_nomor_ba" name="nomor_ba" required class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-955 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="edit_nomor_ba" name="nomor_ba" required class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <!-- Tanggal BA -->
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Tanggal Berita Acara</label>
-                    <input type="date" id="edit_tanggal_ba" name="tanggal_ba" required class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-955 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                    <input type="date" id="edit_tanggal_ba" name="tanggal_ba" required class="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-white rounded-xl text-sm focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <!-- Unggah TTD PP -->
-                <div class="p-4 bg-slate-55 dark:bg-slate-800/40 border border-indigo-100 dark:border-slate-800 rounded-2xl space-y-2">
+                <div class="p-4 bg-slate-50 dark:bg-slate-800/40 border border-indigo-100 dark:border-slate-800 rounded-2xl space-y-2">
                     <label class="block text-xs font-bold text-indigo-900 dark:text-indigo-400 uppercase">Unggah Tanda Tangan Anda (PP) (Opsional)</label>
                     <input type="file" name="signature_image" accept="image/png, image/jpeg, image/jpg" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-slate-800 dark:file:text-white" />
                     <p class="text-[10px] text-slate-400">Kosongkan jika tidak ingin merubah tanda tangan basah lama.</p>
@@ -373,7 +373,7 @@
 
                 <!-- Action Buttons -->
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" onclick="closeEditModal()" class="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-655 dark:text-slate-300 rounded-xl text-sm font-semibold transition">
+                    <button type="button" onclick="closeEditModal()" class="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold transition">
                         Batal
                     </button>
                     <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition shadow-sm">
@@ -407,7 +407,7 @@
                 </div>
 
                 <!-- Unggah TTD -->
-                <div class="p-4 bg-slate-55 dark:bg-slate-800/40 border border-indigo-100 dark:border-slate-800 rounded-2xl space-y-2">
+                <div class="p-4 bg-slate-50 dark:bg-slate-800/40 border border-indigo-100 dark:border-slate-800 rounded-2xl space-y-2">
                     <label class="block text-xs font-bold text-indigo-900 dark:text-indigo-400 uppercase">Unggah Gambar Tanda Tangan Anda (PNG/JPG)</label>
                     <input type="file" name="signature_image" required accept="image/png, image/jpeg, image/jpg" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-slate-800 dark:file:text-white" />
                     <p class="text-[10px] text-slate-400">Silakan unggah pindaian tanda tangan basah Anda.</p>
@@ -415,7 +415,7 @@
 
                 <!-- Action Buttons -->
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" onclick="closeSignModal()" class="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-655 dark:text-slate-300 rounded-xl text-sm font-semibold transition">
+                    <button type="button" onclick="closeSignModal()" class="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold transition">
                         Batal
                     </button>
                     <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition shadow-sm flex items-center gap-1.5">

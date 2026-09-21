@@ -102,7 +102,7 @@
             <!-- Table Card -->
             <div class="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm space-y-4">
                 <h3 class="text-lg font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">
-                    {{ __('Daftar Pengguna Aktif') }}
+                    {{ __('Daftar Pengguna yang Mengajukan Reset Password') }}
                 </h3>
 
                 @if($users->isEmpty())

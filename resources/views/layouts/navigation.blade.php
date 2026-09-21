@@ -167,7 +167,7 @@
                    :class="sidebarOpen ? 'w-full px-4 gap-3 justify-start' : 'w-11 justify-center'"
                    title="Transfer Jabatan dan Paket">
                     <i class="fa-solid fa-right-left text-lg shrink-0"></i>
-                    <span class="text-sm font-semibold whitespace-nowrap overflow-hidden" x-show="sidebarOpen" x-transition>Transfer Jabatan dan Paket</span>
+                    <span class="text-xs font-semibold leading-tight whitespace-normal overflow-hidden" x-show="sidebarOpen" x-transition>Transfer Jabatan<br>&amp; Paket</span>
                 </a>
             @endif
 

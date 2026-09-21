@@ -119,7 +119,7 @@ class AdminUserController extends Controller
 
             return redirect()->back()->with('success', 'Token reset password berhasil dibuat dan dikirim ke email ' . $user->email);
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Token berhasil dibuat, namun gagal mengirim email: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Token berhasil dibuat, tetapi email belum terkirim. Verifikasi domain pengirim Resend terlebih dahulu agar email dapat dikirim ke pengguna lain.');
         }
     }
 
@@ -178,7 +178,10 @@ class AdminUserController extends Controller
             ->orderBy('reset_requested_at', 'asc')
             ->get();
 
-        $query = User::where('status_aktif', 1)->where('id', '!=', auth()->id());
+        // Hanya tampilkan pengguna yang benar-benar mengajukan reset password.
+        $query = User::where('status_aktif', 1)
+            ->where('id', '!=', auth()->id())
+            ->whereNotNull('reset_requested_at');
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
