@@ -19,7 +19,7 @@
 
             @php
                 $message = "Halo Admin BANGEDI, saya ingin mengajukan permohonan reset password untuk akun saya.\n\nBerikut data akun saya:\n- Nama: " . session('requested_user_nama') . "\n- NIP: " . session('requested_user_nip') . "\n- Email: " . session('requested_user_email') . "\n\nMohon bantuannya untuk menyetujui reset password agar link reset dikirimkan ke email saya. Terima kasih.";
-                $waUrl = "https://wa.me/" . env('WHATSAPP_ADMIN_NUMBER', '6285731080074') . "?text=" . urlencode($message);
+                $waUrl = "https://wa.me/" . env('WHATSAPP_ADMIN_NUMBER', '6285867276889') . "?text=" . urlencode($message);
             @endphp
 
             <a href="{{ $waUrl }}" target="_blank" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer">
