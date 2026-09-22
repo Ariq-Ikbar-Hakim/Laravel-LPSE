@@ -38,19 +38,8 @@
             <div class="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
                 <!-- Sticky Top Header -->
                 <header class="h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 md:px-8 flex items-center justify-between sticky top-0 z-10">
-                    <!-- Left: Search or brand -->
-                    <div class="flex items-center gap-3 flex-1 max-w-xs">
-                        <button @click="sidebarOpen = !sidebarOpen; localStorage.setItem('sidebar_open', sidebarOpen)"
-                                class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 hidden md:block"
-                                title="Toggle Sidebar">
-                            <i class="fa-solid fa-bars text-lg"></i>
-                        </button>
-                        <div class="relative w-full hidden sm:block">
-                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                                <i class="fa-solid fa-magnifying-glass text-sm"></i>
-                            </span>
-                            <input type="text" placeholder="Cari paket, user..." class="w-full pl-11 pr-4 py-2 rounded-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 text-sm focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 text-slate-800 dark:text-white transition">
-                        </div>
+                    <!-- Left: mobile brand -->
+                    <div class="flex items-center gap-3 flex-1">
                         <!-- Brand text on mobile -->
                         <div class="sm:hidden flex items-center gap-2">
                             <img src="{{ asset('assets/logo-dpmd-bangkalan.png') }}" alt="Logo DPMD" class="w-7 h-7 object-contain">
