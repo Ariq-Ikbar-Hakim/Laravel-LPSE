@@ -134,7 +134,16 @@ class AdminUserController extends Controller
         }
 
         $user->update(['reset_requested_at' => null]);
-        activity()->causedBy(auth()->user())->performedOn($user)->withProperties(['nama' => $user->nama, 'nip' => $user->nip])->log('RESET_PASSWORD_DITOLAK');
+        // Bersihkan token lama agar permintaan yang ditolak tidak dapat digunakan.
+        DB::table('password_reset_tokens')->where('email', $user->email)->delete();
+        try {
+            activity()->causedBy(auth()->user())
+                ->performedOn($user)
+                ->withProperties(['nama' => $user->nama, 'nip' => $user->nip, 'email' => $user->email])
+                ->log('RESET_PASSWORD_DITOLAK');
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return redirect()->back()->with('success', 'Permintaan reset password '.$user->nama.' telah ditolak.');
     }
