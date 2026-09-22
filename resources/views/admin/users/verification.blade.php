@@ -91,7 +91,7 @@
                 @endif
             </div>
 
-            @include('admin.partials.activity-log', ['activityLog' => $activityLog])
+            @include('admin.partials.approval-log', ['activityLog' => $activityLog, 'title' => 'Log Verifikasi Akun', 'routeName' => 'admin.users.verification'])
 
         </div>
     </div>

@@ -161,7 +161,7 @@
                 @endif
             </div>
 
-            @include('admin.partials.activity-log', ['activityLog' => $activityLog])
+            @include('admin.partials.approval-log', ['activityLog' => $activityLog, 'title' => 'Log Reset Password', 'routeName' => 'admin.users.reset-password'])
 
         </div>
     </div>

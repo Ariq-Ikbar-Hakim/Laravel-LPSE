@@ -315,26 +315,32 @@
         </div>
         @endif
 
-        {{-- Table: Activity Log --}}
-        @if(count($data['recent_activity_list'] ?? []) > 0)
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden">
-            <div class="p-6 border-b border-slate-100 dark:border-slate-800">
-                <h3 class="font-bold text-slate-900 dark:text-white text-base">Log Aktivitas Persetujuan</h3>
-                <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Catatan verifikasi akun, reset password, dan transfer jabatan serta paket.</p>
-            </div>
-            <div class="divide-y divide-slate-100 dark:divide-slate-800">
-                @foreach($data['recent_activity_list'] as $activity)
-                    <div class="px-6 py-3 flex items-center justify-between gap-4 text-sm">
-                        <div>
-                            <p class="font-semibold text-slate-800 dark:text-slate-200">{{ str_replace('_', ' ', $activity->description) }}</p>
-                            <p class="text-xs text-slate-400 dark:text-slate-500">{{ $activity->causer->nama ?? 'Sistem' }} · {{ $activity->created_at->diffForHumans() }}</p>
-                        </div>
-                        <span class="text-xs text-slate-500 dark:text-slate-400">{{ $activity->subject_type ? class_basename($activity->subject_type) : 'Aktivitas' }}</span>
+        {{-- Log persetujuan khusus per fitur --}}
+        @php
+            $logGroups = [
+                ['title' => 'Verifikasi Akun Terbaru', 'items' => $data['account_activity_list'] ?? [], 'url' => route('admin.users.verification')],
+                ['title' => 'Reset Password Terbaru', 'items' => $data['reset_activity_list'] ?? [], 'url' => route('admin.users.reset-password')],
+                ['title' => 'Transfer Jabatan dan Paket Terbaru', 'items' => $data['transfer_activity_list'] ?? [], 'url' => route('admin.transfers.index')],
+            ];
+        @endphp
+        <div class="grid lg:grid-cols-3 gap-6">
+            @foreach($logGroups as $group)
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 dark:border-slate-800"><h3 class="font-bold text-slate-900 dark:text-white text-sm">{{ $group['title'] }}</h3></div>
+                    <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                        @forelse($group['items'] as $activity)
+                            @php
+                                $nama = $activity->getExtraProperty('nama') ?: $activity->getExtraProperty('dari') ?: 'Pengguna';
+                            @endphp
+                            <div class="px-5 py-3 flex items-center gap-3 text-xs"><span class="text-slate-400">{{ $loop->iteration }}.</span><div class="min-w-0"><p class="font-semibold text-slate-800 dark:text-slate-200 truncate">{{ $nama }}</p><p class="text-slate-500">{{ str_contains($activity->description, 'DITOLAK') ? 'Ditolak' : 'Disetujui' }} · {{ $activity->created_at->diffForHumans() }}</p></div></div>
+                        @empty
+                            <p class="p-5 text-xs text-slate-500">Belum ada catatan.</p>
+                        @endforelse
                     </div>
-                @endforeach
-            </div>
+                    <a href="{{ $group['url'] }}" class="block px-5 py-3 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Lihat log lengkap →</a>
+                </div>
+            @endforeach
         </div>
-        @endif
 
         <script>
         document.addEventListener("DOMContentLoaded", function() {

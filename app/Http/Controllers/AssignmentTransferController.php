@@ -98,14 +98,27 @@ class AssignmentTransferController extends Controller
     /**
      * Halaman manajemen transfer / swap bagi Admin.
      */
-    public function indexAdmin(): View
+    public function indexAdmin(Request $request): View
     {
         $transfers = AssignmentTransfer::with(['paket', 'dariUser', 'keUser', 'disetujuiOleh'])
             ->orderByRaw("CASE status WHEN 'menunggu' THEN 1 WHEN 'disetujui' THEN 2 WHEN 'ditolak' THEN 3 ELSE 4 END")
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $activityLog = \Spatie\Activitylog\Models\Activity::with('causer')->latest()->limit(10)->get();
+        $query = \Spatie\Activitylog\Models\Activity::with('causer')
+            ->whereIn('description', ['TRANSFER_JABATAN_DAN_PAKET_DISETUJUI', 'TRANSFER_JABATAN_DAN_PAKET_DITOLAK']);
+        if ($request->filled('search')) {
+            $query->where('properties', 'like', '%'.$request->string('search')->toString().'%');
+        }
+        if ($request->filled('year')) {
+            $query->whereYear('created_at', $request->integer('year'));
+        }
+        if ($request->status === 'disetujui') {
+            $query->where('description', 'like', '%DISETUJUI%');
+        } elseif ($request->status === 'ditolak') {
+            $query->where('description', 'like', '%DITOLAK%');
+        }
+        $activityLog = $query->latest()->paginate(5)->withQueryString();
         return view('admin.transfers.index', compact('transfers', 'activityLog'));
     }
 

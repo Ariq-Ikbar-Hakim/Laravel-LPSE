@@ -34,7 +34,7 @@ class AdminUserController extends Controller
     public function approve(User $user): RedirectResponse
     {
         $user->update(['status_aktif' => 1]);
-        activity()->causedBy(auth()->user())->performedOn($user)->log('AKUN_DIVERIFIKASI_DAN_DISETUJUI');
+        activity()->causedBy(auth()->user())->performedOn($user)->withProperties(['nama' => $user->nama, 'nip' => $user->nip])->log('AKUN_DIVERIFIKASI_DAN_DISETUJUI');
 
         try {
             Mail::to($user->email)->send(new \App\Mail\AccountApprovedNotification($user->nama));
@@ -59,7 +59,7 @@ class AdminUserController extends Controller
             // Tetap jalankan penghapusan jika email gagal terkirim
         }
 
-        activity()->causedBy(auth()->user())->performedOn($user)->withProperties(['email' => $email])->log('AKUN_DITOLAK');
+        activity()->causedBy(auth()->user())->performedOn($user)->withProperties(['nama' => $nama, 'nip' => $user->nip, 'email' => $email])->log('AKUN_DITOLAK');
         $user->delete(); // Hard delete dari database
 
         return redirect()->back()->with('success', 'Pendaftaran akun ' . $nama . ' telah ditolak dan email notifikasi telah dikirim.');
@@ -118,6 +118,7 @@ class AdminUserController extends Controller
             $user->update([
                 'reset_requested_at' => null,
             ]);
+            activity()->causedBy(auth()->user())->performedOn($user)->withProperties(['nama' => $user->nama, 'nip' => $user->nip])->log('RESET_PASSWORD_DISETUJUI');
 
             return redirect()->back()->with('success', 'Token reset password berhasil dibuat dan dikirim ke email ' . $user->email);
         } catch (\Exception $e) {
@@ -133,7 +134,7 @@ class AdminUserController extends Controller
         }
 
         $user->update(['reset_requested_at' => null]);
-        activity()->causedBy(auth()->user())->performedOn($user)->log('RESET_PASSWORD_DITOLAK');
+        activity()->causedBy(auth()->user())->performedOn($user)->withProperties(['nama' => $user->nama, 'nip' => $user->nip])->log('RESET_PASSWORD_DITOLAK');
 
         return redirect()->back()->with('success', 'Permintaan reset password '.$user->nama.' telah ditolak.');
     }
@@ -177,10 +178,10 @@ class AdminUserController extends Controller
     /**
      * Tampilkan halaman verifikasi akun baru (pending).
      */
-    public function verificationIndex(): View
+    public function verificationIndex(Request $request): View
     {
         $pendingUsers = User::where('status_aktif', 0)->latest()->get();
-        $activityLog = \Spatie\Activitylog\Models\Activity::with('causer')->latest()->limit(10)->get();
+        $activityLog = $this->approvalLog($request, ['AKUN_DIVERIFIKASI_DAN_DISETUJUI', 'AKUN_DITOLAK']);
         return view('admin.users.verification', compact('pendingUsers', 'activityLog'));
     }
 
@@ -206,7 +207,26 @@ class AdminUserController extends Controller
             });
         }
         $users = $query->latest()->paginate(15);
-        $activityLog = \Spatie\Activitylog\Models\Activity::with('causer')->latest()->limit(10)->get();
+        $activityLog = $this->approvalLog($request, ['RESET_PASSWORD_DISETUJUI', 'RESET_PASSWORD_DITOLAK']);
         return view('admin.users.reset-password', compact('users', 'pendingResets', 'activityLog'));
+    }
+
+    private function approvalLog(Request $request, array $descriptions)
+    {
+        $query = \Spatie\Activitylog\Models\Activity::with('causer')
+            ->whereIn('description', $descriptions);
+        if ($request->filled('search')) {
+            $term = $request->string('search')->toString();
+            $query->where('properties', 'like', '%'.$term.'%');
+        }
+        if ($request->filled('year')) {
+            $query->whereYear('created_at', $request->integer('year'));
+        }
+        if ($request->status === 'disetujui') {
+            $query->where('description', 'like', '%DISETUJUI%');
+        } elseif ($request->status === 'ditolak') {
+            $query->where('description', 'like', '%DITOLAK%');
+        }
+        return $query->latest()->paginate(5)->withQueryString();
     }
 }

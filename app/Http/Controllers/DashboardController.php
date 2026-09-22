@@ -27,7 +27,10 @@ class DashboardController extends Controller
             // List untuk tabel dashboard
             $data['pending_users_list'] = User::where('status_aktif', 0)->latest()->limit(5)->get();
             $data['recent_transfers_list'] = \App\Models\AssignmentTransfer::with(['dariUser', 'keUser', 'paket'])->latest()->limit(5)->get();
-            $data['recent_activity_list'] = \Spatie\Activitylog\Models\Activity::with('causer')->latest()->limit(10)->get();
+            $activity = \Spatie\Activitylog\Models\Activity::latest();
+            $data['account_activity_list'] = (clone $activity)->whereIn('description', ['AKUN_DIVERIFIKASI_DAN_DISETUJUI', 'AKUN_DITOLAK'])->limit(5)->get();
+            $data['reset_activity_list'] = (clone $activity)->whereIn('description', ['RESET_PASSWORD_DISETUJUI', 'RESET_PASSWORD_DITOLAK'])->limit(5)->get();
+            $data['transfer_activity_list'] = (clone $activity)->whereIn('description', ['TRANSFER_JABATAN_DAN_PAKET_DISETUJUI', 'TRANSFER_JABATAN_DAN_PAKET_DITOLAK'])->limit(5)->get();
             
             // Statistik Status Paket untuk Chart
             $data['chart_status_stats'] = Paket::selectRaw('status, count(*) as count')

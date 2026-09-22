@@ -335,5 +335,5 @@
             document.getElementById('detail-modal').classList.add('hidden');
         }
     </script>
-    @include('admin.partials.activity-log', ['activityLog' => $activityLog])
+    @include('admin.partials.approval-log', ['activityLog' => $activityLog, 'title' => 'Log Transfer Jabatan dan Paket', 'routeName' => 'admin.transfers.index'])
 </x-app-layout>
