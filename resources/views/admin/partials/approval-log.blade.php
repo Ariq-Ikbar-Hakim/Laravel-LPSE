@@ -27,7 +27,10 @@
                 <thead><tr class="text-left text-slate-500 border-b dark:border-slate-800"><th class="py-2 pr-3">No.</th><th class="py-2 pr-3">Status</th><th class="py-2 pr-3">Pengguna</th><th class="py-2">Waktu</th></tr></thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                     @foreach($activityLog as $activity)
-                        @php($nama = $activity->getExtraProperty('nama') ?: $activity->getExtraProperty('dari') ?: 'Pengguna')
+                        @php
+                            $properties = is_array($activity->properties) ? $activity->properties : (method_exists($activity->properties, 'toArray') ? $activity->properties->toArray() : []);
+                            $nama = $properties['nama'] ?? $properties['dari'] ?? 'Pengguna';
+                        @endphp
                         <tr><td class="py-2 pr-3">{{ $activityLog->firstItem() + $loop->index }}</td><td class="py-2 pr-3"><span class="font-semibold {{ str_contains($activity->description, 'DITOLAK') ? 'text-red-500' : 'text-emerald-500' }}">{{ str_contains($activity->description, 'DITOLAK') ? 'Ditolak' : 'Disetujui' }}</span></td><td class="py-2 pr-3 text-slate-700 dark:text-slate-200">{{ $nama }}</td><td class="py-2 text-slate-500">{{ $activity->created_at->format('d/m/Y H:i') }}</td></tr>
                     @endforeach
                 </tbody>

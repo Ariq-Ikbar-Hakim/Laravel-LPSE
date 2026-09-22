@@ -330,7 +330,8 @@
                     <div class="divide-y divide-slate-100 dark:divide-slate-800">
                         @forelse($group['items'] as $activity)
                             @php
-                                $nama = $activity->getExtraProperty('nama') ?: $activity->getExtraProperty('dari') ?: 'Pengguna';
+                                $properties = is_array($activity->properties) ? $activity->properties : (method_exists($activity->properties, 'toArray') ? $activity->properties->toArray() : []);
+                                $nama = $properties['nama'] ?? $properties['dari'] ?? 'Pengguna';
                             @endphp
                             <div class="px-5 py-3 flex items-center gap-3 text-xs"><span class="text-slate-400">{{ $loop->iteration }}.</span><div class="min-w-0"><p class="font-semibold text-slate-800 dark:text-slate-200 truncate">{{ $nama }}</p><p class="text-slate-500">{{ str_contains($activity->description, 'DITOLAK') ? 'Ditolak' : 'Disetujui' }} · {{ $activity->created_at->diffForHumans() }}</p></div></div>
                         @empty
