@@ -335,4 +335,5 @@
             document.getElementById('detail-modal').classList.add('hidden');
         }
     </script>
+    @include('admin.partials.activity-log', ['activityLog' => $activityLog])
 </x-app-layout>

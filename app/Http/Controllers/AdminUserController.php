@@ -34,6 +34,7 @@ class AdminUserController extends Controller
     public function approve(User $user): RedirectResponse
     {
         $user->update(['status_aktif' => 1]);
+        activity()->causedBy(auth()->user())->performedOn($user)->log('AKUN_DIVERIFIKASI_DAN_DISETUJUI');
 
         try {
             Mail::to($user->email)->send(new \App\Mail\AccountApprovedNotification($user->nama));
@@ -58,6 +59,7 @@ class AdminUserController extends Controller
             // Tetap jalankan penghapusan jika email gagal terkirim
         }
 
+        activity()->causedBy(auth()->user())->performedOn($user)->withProperties(['email' => $email])->log('AKUN_DITOLAK');
         $user->delete(); // Hard delete dari database
 
         return redirect()->back()->with('success', 'Pendaftaran akun ' . $nama . ' telah ditolak dan email notifikasi telah dikirim.');
@@ -123,6 +125,19 @@ class AdminUserController extends Controller
         }
     }
 
+    /** Tolak permintaan reset password yang sedang menunggu. */
+    public function rejectReset(User $user): RedirectResponse
+    {
+        if (! $user->reset_requested_at) {
+            return redirect()->back()->with('error', 'Pengguna tersebut tidak memiliki permintaan reset password aktif.');
+        }
+
+        $user->update(['reset_requested_at' => null]);
+        activity()->causedBy(auth()->user())->performedOn($user)->log('RESET_PASSWORD_DITOLAK');
+
+        return redirect()->back()->with('success', 'Permintaan reset password '.$user->nama.' telah ditolak.');
+    }
+
     /**
      * Tampilkan daftar paket untuk Admin.
      */
@@ -165,7 +180,8 @@ class AdminUserController extends Controller
     public function verificationIndex(): View
     {
         $pendingUsers = User::where('status_aktif', 0)->latest()->get();
-        return view('admin.users.verification', compact('pendingUsers'));
+        $activityLog = \Spatie\Activitylog\Models\Activity::with('causer')->latest()->limit(10)->get();
+        return view('admin.users.verification', compact('pendingUsers', 'activityLog'));
     }
 
     /**
@@ -190,6 +206,7 @@ class AdminUserController extends Controller
             });
         }
         $users = $query->latest()->paginate(15);
-        return view('admin.users.reset-password', compact('users', 'pendingResets'));
+        $activityLog = \Spatie\Activitylog\Models\Activity::with('causer')->latest()->limit(10)->get();
+        return view('admin.users.reset-password', compact('users', 'pendingResets', 'activityLog'));
     }
 }

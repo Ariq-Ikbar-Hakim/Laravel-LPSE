@@ -27,6 +27,7 @@ class DashboardController extends Controller
             // List untuk tabel dashboard
             $data['pending_users_list'] = User::where('status_aktif', 0)->latest()->limit(5)->get();
             $data['recent_transfers_list'] = \App\Models\AssignmentTransfer::with(['dariUser', 'keUser', 'paket'])->latest()->limit(5)->get();
+            $data['recent_activity_list'] = \Spatie\Activitylog\Models\Activity::with('causer')->latest()->limit(10)->get();
             
             // Statistik Status Paket untuk Chart
             $data['chart_status_stats'] = Paket::selectRaw('status, count(*) as count')

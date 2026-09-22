@@ -68,6 +68,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('/users/{user}/reject', [AdminUserController::class, 'reject'])->name('users.reject');
     Route::patch('/users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.update-role');
     Route::post('/users/{user}/reset-token', [AdminUserController::class, 'generateResetToken'])->name('users.reset-token');
+    Route::post('/users/{user}/reject-reset', [AdminUserController::class, 'rejectReset'])->name('users.reject-reset');
     
     // Submenu Administrator
     Route::get('/users/verification', [AdminUserController::class, 'verificationIndex'])->name('users.verification');

@@ -246,6 +246,13 @@
                                             Setujui
                                         </button>
                                     </form>
+                                    <form action="{{ route('admin.users.reject', $pUser) }}" method="POST" class="inline" onsubmit="return confirm('Tolak pendaftaran akun ini?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="px-4 py-1.5 rounded-xl text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 transition">
+                                            Tolak
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                         @endforeach
@@ -304,6 +311,27 @@
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+        </div>
+        @endif
+
+        {{-- Table: Activity Log --}}
+        @if(count($data['recent_activity_list'] ?? []) > 0)
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-100 dark:border-slate-800">
+                <h3 class="font-bold text-slate-900 dark:text-white text-base">Log Aktivitas Persetujuan</h3>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Catatan verifikasi akun, reset password, dan transfer jabatan serta paket.</p>
+            </div>
+            <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                @foreach($data['recent_activity_list'] as $activity)
+                    <div class="px-6 py-3 flex items-center justify-between gap-4 text-sm">
+                        <div>
+                            <p class="font-semibold text-slate-800 dark:text-slate-200">{{ str_replace('_', ' ', $activity->description) }}</p>
+                            <p class="text-xs text-slate-400 dark:text-slate-500">{{ $activity->causer->nama ?? 'Sistem' }} · {{ $activity->created_at->diffForHumans() }}</p>
+                        </div>
+                        <span class="text-xs text-slate-500 dark:text-slate-400">{{ $activity->subject_type ? class_basename($activity->subject_type) : 'Aktivitas' }}</span>
+                    </div>
+                @endforeach
             </div>
         </div>
         @endif

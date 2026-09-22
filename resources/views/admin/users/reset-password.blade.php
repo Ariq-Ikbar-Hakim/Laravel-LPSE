@@ -63,12 +63,18 @@
                                         </td>
                                         <td class="p-4 pr-6 text-center">
                                             <!-- Generate Reset Password Token -->
-                                            <form action="{{ route('admin.users.reset-token', $user) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui dan mengirimkan link reset password ke email user?')">
+                                                    <form action="{{ route('admin.users.reset-token', $user) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui dan mengirimkan link reset password ke email user?')">
                                                 @csrf
                                                 <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-1.5 px-4 rounded-xl text-xs transition duration-150 shadow-sm flex items-center gap-1.5 mx-auto cursor-pointer">
                                                     <i class="fa-solid fa-paper-plane"></i> Setujui & Kirim Link
                                                 </button>
-                                            </form>
+                                                    </form>
+                                                    <form action="{{ route('admin.users.reject-reset', $user) }}" method="POST" class="inline" onsubmit="return confirm('Tolak permintaan reset password ini?')">
+                                                        @csrf
+                                                        <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white font-semibold py-1.5 px-4 rounded-xl text-xs transition duration-150 shadow-sm">
+                                                            Tolak
+                                                        </button>
+                                                    </form>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -154,6 +160,8 @@
                     </div>
                 @endif
             </div>
+
+            @include('admin.partials.activity-log', ['activityLog' => $activityLog])
 
         </div>
     </div>

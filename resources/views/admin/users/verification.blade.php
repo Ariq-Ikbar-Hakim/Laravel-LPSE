@@ -91,6 +91,8 @@
                 @endif
             </div>
 
+            @include('admin.partials.activity-log', ['activityLog' => $activityLog])
+
         </div>
     </div>
 </x-app-layout>

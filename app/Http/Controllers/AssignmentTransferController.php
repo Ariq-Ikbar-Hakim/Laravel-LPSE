@@ -105,7 +105,8 @@ class AssignmentTransferController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('admin.transfers.index', compact('transfers'));
+        $activityLog = \Spatie\Activitylog\Models\Activity::with('causer')->latest()->limit(10)->get();
+        return view('admin.transfers.index', compact('transfers', 'activityLog'));
     }
 
     /**
@@ -229,6 +230,11 @@ class AssignmentTransferController extends Controller
         });
 
         $transfer->load('dariUser');
+        activity()->causedBy(Auth::user())->withProperties([
+            'transfer_id' => $transfer->id,
+            'dari' => $transfer->dariUser->nama,
+            'ke' => $transfer->keUser->nama,
+        ])->log('TRANSFER_JABATAN_DAN_PAKET_DISETUJUI');
         Mail::to($transfer->dariUser->email)->send(new \App\Mail\AssignmentTransferNotification($transfer, 'updated'));
 
         return redirect()->back()->with('success', 'Transfer jabatan dan seluruh paket tugas berhasil disetujui.');
@@ -254,6 +260,11 @@ class AssignmentTransferController extends Controller
         ]);
 
         $transfer->load('dariUser');
+        activity()->causedBy(Auth::user())->withProperties([
+            'transfer_id' => $transfer->id,
+            'dari' => $transfer->dariUser->nama,
+            'ke' => $transfer->keUser->nama,
+        ])->log('TRANSFER_JABATAN_DAN_PAKET_DITOLAK');
         Mail::to($transfer->dariUser->email)->send(new \App\Mail\AssignmentTransferNotification($transfer, 'updated'));
 
         return redirect()->back()->with('success', 'Pengajuan transfer jabatan dan paket telah ditolak.');
