@@ -39,7 +39,9 @@ return [
 
         'smtp' => [
             'transport' => 'smtp',
-            'scheme' => env('MAIL_SCHEME'),
+            // MAIL_SCHEME is used by newer Laravel versions; MAIL_ENCRYPTION
+            // keeps the configuration compatible with the usual Gmail SMTP setup.
+            'scheme' => env('MAIL_SCHEME', env('MAIL_ENCRYPTION', 'tls')),
             'url' => env('MAIL_URL'),
             'host' => env('MAIL_HOST', '127.0.0.1'),
             'port' => env('MAIL_PORT', 2525),
