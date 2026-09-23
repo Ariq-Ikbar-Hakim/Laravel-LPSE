@@ -122,7 +122,8 @@ class AdminUserController extends Controller
 
             return redirect()->back()->with('success', 'Token reset password berhasil dibuat dan dikirim ke email ' . $user->email);
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Token berhasil dibuat, tetapi email belum terkirim. Verifikasi domain pengirim Resend terlebih dahulu agar email dapat dikirim ke pengguna lain.');
+            report($e);
+            return redirect()->back()->with('error', 'Token berhasil dibuat, tetapi email belum terkirim. Periksa konfigurasi email SMTP dan App Password Gmail di Railway.');
         }
     }
 
